@@ -2,3 +2,5 @@
 *.pyc
 wxWha.py
 yowsup
+Doxyfile
+doc/

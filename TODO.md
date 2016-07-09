@@ -1,2 +1,3 @@
  *  Use logger instead of sys.stderr.write
- *  Test receiving messages
+ *  Actually check for sent messages being received by the server
+ *  Comment everything

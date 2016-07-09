@@ -1,6 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""@package docstring
+Yowsup connector for wxpyWha (a simple wxWidgets GUI wrapper atop yowsup).
+
+Defines custom YowInterfaceLayer and builds the Yowsup stack.
+
+This is based on code from the yowsup echo example, the yowsup cli and pywhatsapp.
+"""
+
 # from echo stack
 from yowsup.stacks import  YowStackBuilder
 from yowsup.layers.auth import AuthError
@@ -24,12 +32,13 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 
 class WhaLayerInterface():
-     def __init__(self):
-         self.eventTarget = None
-         self.sendMessage = None
+    """Interface class for connecting the layer object with the GUI."""
+    def __init__(self):
+        self.eventTarget = None
+        self.sendMessage = None
 
 class WhaLayer(YowInterfaceLayer):
-    
+    """Custom YowInterfaceLayer class for wxpyWha."""
     def __init__(self):
         super(WhaLayer, self).__init__()
         YowInterfaceLayer.__init__(self)
@@ -40,13 +49,8 @@ class WhaLayer(YowInterfaceLayer):
     @ProtocolEntityCallback("message")
     def onMessage(self, messageProtocolEntity):
         sys.stderr.write("Received a message from %s of type %s\n"%(messageProtocolEntity.getFrom(),messageProtocolEntity.getType()))
-        self.toLower(messageProtocolEntity.ack(True)) # taken from yowsup cli (marks message as read, axolotl will do so anyways)
-        '''
-        # this is from echoclient
-        self.toLower(messageProtocolEntity.forward(messageProtocolEntity.getFrom()))
-        self.toLower(messageProtocolEntity.ack())
+         # taken from yowsup cli (marks message as read, upon repeated receival, axolotl will do so anyways)
         self.toLower(messageProtocolEntity.ack(True))
-        '''
         if self.interface.eventTarget:
             self.interface.eventTarget.onIncomingMessage(messageProtocolEntity)
 
