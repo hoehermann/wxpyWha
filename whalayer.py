@@ -75,7 +75,6 @@ class WhaLayer(YowInterfaceLayer):
         sys.stderr.write("Login Failed. Reason: %s\n" % entity.getReason())
         
     def sendMessage(self, jid, content):
-        sys.stderr.write("WhaLayer.sendMessage\n")
         if not self.connected:
             sys.stderr.write("Cannot send message. Not connected.\n")
         else:
