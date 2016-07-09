@@ -9,7 +9,10 @@ import sys
 import pickle
 import datetime
 
-DEBUG_PASSIVE = True
+# from pywhatsapp, only here for debugging
+from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
+DEBUG_GENERATE_MESSAGE = True
+DEBUG_PASSIVE = False
 
 IncomingMessageDataEventType = wx.NewEventType()
 INCOMING_MESSAGE_DATA_EVENT = wx.PyEventBinder(IncomingMessageDataEventType, 1)
@@ -73,7 +76,7 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         self.messageEntities = self.loadEntities()
         for message in sorted(self.messageEntities, key=lambda m:m.getTimestamp()):
             self.appendMessage(message)
-        self.updateConversationListBox()
+        self.populateConversationListBox()
         
     def appendMessage(self, message):
         jid = message.getFrom()
@@ -82,9 +85,12 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         else:
             self.conversations[jid].append(message)
         
-    def updateConversationListBox(self):
-        for jid in self.conversations:
+    def populateConversationListBox(self, jid = None):
+        if jid:
             self.ConversationListBox.Append(jid)
+        else:
+            for jid in self.conversations:
+                self.ConversationListBox.Append(jid)
     
     def conversationFrame(self, jid, message = None):
         if jid in self.conversationFrames:
@@ -111,11 +117,11 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         
     def onIncomingMessage(self, evt):
         message = evt.messageProtocolEntity
-        entities.append(message)
-        self.saveEntities(entities)
+        self.messageEntities.append(message)
+        self.saveMessageEntities()
         self.appendMessage(message)
-        self.updateConversationListBox()
-        self.conversationFrame(jid)
+        self.populateConversationListBox(message.getFrom())
+        self.conversationFrame(message.getFrom())
 
     '''
     def save(self):
@@ -138,14 +144,17 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
             sys.stderr.write("IOError: History was not loaded.\n")
     '''
             
-    def saveEntities(self, entities):
+    def saveMessageEntities(self):
         if DEBUG_PASSIVE:
-            sys.stderr.write("Skipped writing entities due to DEBUG_PASSIVE.")
+            sys.stderr.write("Skipped writing entities due to DEBUG_PASSIVE.\n")
         else:
             with open("entities.pkl", 'wb') as f:
-                pickle.dump(entities, f)
+                # do not save generated debug content
+                self.messageEntities = [m for m in self.messageEntities if m.getFrom() not in ["DEBUG@s.whatsapp.net"]]
+                #self.messageEntities = [m for m in self.messageEntities if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES]
+                pickle.dump(self.messageEntities, f)
                 f.close()
-                sys.stderr.write("Wrote %d entities.\n"%(len(entities)))
+                sys.stderr.write("Wrote %d entities.\n"%(len(self.messageEntities)))
             
     def loadEntities(self):
         entities = []
@@ -172,8 +181,9 @@ if __name__ == "__main__":
     client.setIncomingMessageHandler(imh)
     if not DEBUG_PASSIVE:
         backgroundClient = threading.Thread(target=client.start)
+        backgroundClient.daemon = True
         backgroundClient.start()
-    if False:
+    if DEBUG_GENERATE_MESSAGE:
         tmpe = TextMessageProtocolEntity("locally generated test message", _from="DEBUG@s.whatsapp.net")
         imh.onIncomingMessage(tmpe)
     
