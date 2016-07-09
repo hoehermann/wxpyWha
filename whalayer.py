@@ -67,7 +67,7 @@ class WhaLayer(YowInterfaceLayer):
         
         if False:
             sys.stderr.write("Generating a local message for debbugging the GUI...\n")
-            tmpe = TextMessageProtocolEntity("locally generated test message", _from="495551234567@s.whatsapp.net")
+            tmpe = TextMessageProtocolEntity("locally generated test message", _from="DEBUG@s.whatsapp.net")
             self.interface.eventTarget.onIncomingMessage(tmpe)
 
     @ProtocolEntityCallback("failure")

@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import wx
-from wxWha import ConversationFrame, ConversationListFrame
+import wxWha
 import threading
 from whalayer import WhaClient
 import sys
 import pickle
 import datetime
+
+DEBUG_PASSIVE = True
 
 IncomingMessageDataEventType = wx.NewEventType()
 INCOMING_MESSAGE_DATA_EVENT = wx.PyEventBinder(IncomingMessageDataEventType, 1)
@@ -28,48 +30,13 @@ class IncomingMessageHandler():
         evt = IncomingMessageDataEvent(IncomingMessageDataEventType, -1, messageProtocolEntity)
         wx.PostEvent(self.gui, evt)
 
-class MainFrame ( ConversationListFrame ):
-    def __init__(self, parent, client):
-        ConversationListFrame.__init__(self,parent)
-        self.Bind(INCOMING_MESSAGE_DATA_EVENT, self.onIncomingMessage)
-        self.conversationFrames = {}
-        self.client = client
-        self.load()
-        for jid in self.conversationFrames:
-            self.ConversationListBox.Append(jid)
-            
-    def onListBox( self, event ):
-        index = event.GetSelection()
-        jid = self.ConversationListBox.GetString(index)
-        self.conversationFrames[jid].Show()
+class ConversationFrame ( wxWha.ConversationFrame ):
+    def __init__(self, parent, client, jid):
+        wxWha.ConversationFrame.__init__(self, parent)
+        # TODO: do not abuse title as field for jid
+        self.SetTitle(jid)
         
-    # TODO: move method into ConversationFrame
-    def onSendButtonClick( self, conversationFrame, event ):
-        sys.stderr.write("onSendButtonClick\n")
-        self.client.sendMessage(conversationFrame.GetTitle(), conversationFrame.MessageTextControl.GetValue())
-        conversationFrame.ConversationTextControl.AppendText("%s: %s\n"%("Ich", conversationFrame.MessageTextControl.GetValue()))
-        conversationFrame.MessageTextControl.Clear()
-        
-    def conversation(self, f):
-        # TODO: reconstruct C++ part of frame
-        if f not in self.conversationFrames:
-            # TODO: repopulate ConversationListFrame
-            cf = ConversationFrame(self)
-            self.conversationFrames[f] = cf
-            # TODO: move initialisation into ConversationFrame
-            cf.SetTitle(f)
-            cf.SendButton.Bind( wx.EVT_BUTTON, lambda event: self.onSendButtonClick(cf, event))
-        else:
-            cf = self.conversationFrames[f]
-        return cf
-        
-    def onIncomingMessage(self, evt):
-        message = evt.messageProtocolEntity
-        
-        entities = self.loadEntities()
-        entities.append(message)
-        self.saveEntities(entities)
-        
+    def append(self, message):
         jid = message.getFrom()
         if message.isGroupMessage():
             sender = message.getParticipant()
@@ -80,15 +47,77 @@ class MainFrame ( ConversationListFrame ):
             line = message.getBody()
         else:
             line = "Message is of unhandled type %s."%(t)
-        
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
+        self.ConversationTextControl.AppendText("(%s) %s: %s\n"%(formattedDate, sender, line))
+    
+    def onClose( self, event ):
+        self.GetParent().onConversationFrameDestroy(self)
+        self.Destroy()
         
-        cf = self.conversation(jid)
-        cf.ConversationTextControl.AppendText("(%s) %s: %s\n"%(formattedDate, sender, line))
-        cf.Show()
-            
-        self.save()
+    def onSendButtonClick( self, event ):
+        sys.stderr.write("onSendButtonClick\n")
+        self.client.sendMessage(self.GetTitle(), self.MessageTextControl.GetValue())
+        # TODO: disable send button and wait here until server receipt
+        # TODO: insert locally generated message into entity storage, let generic update routines do the rest
+        self.ConversationTextControl.AppendText("%s: %s\n"%("Ich", self.MessageTextControl.GetValue()))
+        self.MessageTextControl.Clear()
 
+class ConversationListFrame ( wxWha.ConversationListFrame ):
+    def __init__(self, parent, client):
+        wxWha.ConversationListFrame.__init__(self, parent)
+        self.Bind(INCOMING_MESSAGE_DATA_EVENT, self.onIncomingMessage)
+        
+        self.client = client
+        self.conversationFrames = {}
+        self.conversations = {}
+        self.messageEntities = self.loadEntities()
+        for message in sorted(self.messageEntities, key=lambda m:m.getTimestamp()):
+            self.appendMessage(message)
+        self.updateConversationListBox()
+        
+    def appendMessage(self, message):
+        jid = message.getFrom()
+        if jid not in self.conversations:
+            self.conversations[jid] = [message]
+        else:
+            self.conversations[jid].append(message)
+        
+    def updateConversationListBox(self):
+        for jid in self.conversations:
+            self.ConversationListBox.Append(jid)
+    
+    def conversationFrame(self, jid, message = None):
+        if jid in self.conversationFrames:
+            cf = self.conversationFrames[jid]
+            if message:
+                cf.append(message)
+            cf.Raise()
+        else:
+            cf = ConversationFrame(self, self.client, jid)
+            for message in self.conversations[jid]:
+                cf.append(message)
+            cf.Show()
+            self.conversationFrames[jid] = cf
+    
+    def onConversationFrameDestroy(self, cf):
+        del self.conversationFrames[cf.GetTitle()]
+            
+    def onListBox( self, event ):
+        index = event.GetSelection()
+        if (index >= 0):
+            self.ConversationListBox.Deselect(index)
+            jid = self.ConversationListBox.GetString(index)
+            self.conversationFrame(jid)
+        
+    def onIncomingMessage(self, evt):
+        message = evt.messageProtocolEntity
+        entities.append(message)
+        self.saveEntities(entities)
+        self.appendMessage(message)
+        self.updateConversationListBox()
+        self.conversationFrame(jid)
+
+    '''
     def save(self):
         conversations = {}
         for f, cf in self.conversationFrames.items():
@@ -107,12 +136,16 @@ class MainFrame ( ConversationListFrame ):
                     cf.Show()
         except IOError as ioe:
             sys.stderr.write("IOError: History was not loaded.\n")
+    '''
             
     def saveEntities(self, entities):
-        with open("entities.pkl", 'wb') as f:
-            pickle.dump(entities, f)
-            f.close()
-            sys.stderr.write("Wrote %d entities.\n"%(len(entities)))
+        if DEBUG_PASSIVE:
+            sys.stderr.write("Skipped writing entities due to DEBUG_PASSIVE.")
+        else:
+            with open("entities.pkl", 'wb') as f:
+                pickle.dump(entities, f)
+                f.close()
+                sys.stderr.write("Wrote %d entities.\n"%(len(entities)))
             
     def loadEntities(self):
         entities = []
@@ -131,15 +164,18 @@ if __name__ == "__main__":
     login = sys.argv[1]
     base64passwd = sys.argv[2]
     
-    app = wx.App(False)
+    app = wx.App()
     
     client = WhaClient((login,base64passwd))
-    frame = MainFrame(None, client)
+    frame = ConversationListFrame(None, client)
     imh = IncomingMessageHandler(frame)
     client.setIncomingMessageHandler(imh)
-    
-    backgroundClient = threading.Thread(target=client.start)
-    backgroundClient.start()
+    if not DEBUG_PASSIVE:
+        backgroundClient = threading.Thread(target=client.start)
+        backgroundClient.start()
+    if False:
+        tmpe = TextMessageProtocolEntity("locally generated test message", _from="DEBUG@s.whatsapp.net")
+        imh.onIncomingMessage(tmpe)
     
     frame.Show()
     app.MainLoop()
