@@ -16,6 +16,12 @@ import datetime
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
+"""If true, names instead of JIDs are shown in the conversation history (if set by the participant)."""
+CONFIG_SHOW_NAMES = True
+
+"""Name to use for own messages in conversation history."""
+CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
+
 """If true, locally generates a message to handle in the GUI."""
 DEBUG_GENERATE_MESSAGE = False
 
@@ -43,22 +49,40 @@ class IncomingMessageHandler():
         wx.PostEvent(self.gui, evt)
 
 class ConversationFrame ( wxWha.ConversationFrame ):
+    """
+    This is the ConversationFrame. 
+    
+    A simple frame with a textarea for the conversation history, 
+    as well as an input area for answers and a send button.
+    """
+    
     def __init__(self, parent, client, jid):
+        """
+        :param client: Reference to the WhaLayer doing the actual work (for sending messages)
+        :param jid: The ID of this conversation (the other party or group chat).
+        """
         wxWha.ConversationFrame.__init__(self, parent)
         self.client = client
         # TODO: do not abuse title as field for jid
         self.SetTitle(jid)
         
     def append(self, message):
+        """Adds a message to this conversation history."""
         jid = message.getFrom()
         if jid is None:
+            # outgoing message
+            # displayed in conversation as sent from SELF
             jid = message.getTo()
-            sender = "SELF@s.whatsapp.net" # TODO: move to constant
+            sender = CONGFIG_OWN_NAME
         else:
-            if message.isGroupMessage():
-                sender = message.getParticipant()
+            # incoming message
+            if CONFIG_SHOW_NAMES:
+                sender = message.getNotify()
             else:
-                sender = jid
+                if message.isGroupMessage():
+                    sender = message.getParticipant()
+                else:
+                    sender = jid
         t = message.getType()
         if t == "text":
             line = message.getBody()
@@ -68,16 +92,19 @@ class ConversationFrame ( wxWha.ConversationFrame ):
         self.ConversationTextControl.AppendText("(%s) %s: %s\n"%(formattedDate, sender, line))
     
     def onClose( self, event ):
+        """Notifies the parent ConversationListFrame before destruction."""
         self.GetParent().onConversationFrameDestroy(self)
         self.Destroy()
         
     def onSendButtonClick( self, event ):
+        """Sends a message via the WhaLayer."""
         jid = self.GetTitle()
         content = self.MessageTextControl.GetValue()
         self.client.sendMessage(jid, content)
         # NOTE: sendMessage return value gets lost?
         # TODO: disable send button and wait here until server receipt
-        # TODO: message entity is constructed here AND in the client. do a copy instead?
+        # create message for local display
+        # TODO: message entity is constructed here AND in the client WhaLayer. create copy instead?
         outgoingMessage = TextMessageProtocolEntity(content, to = jid)
         self.append(outgoingMessage)
         self.MessageTextControl.Clear()
@@ -89,7 +116,7 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         
         self.client = client
         self.SetTitle("wxpyWha %s"%(login))
-        # TODO: save message entities in home folder
+        # TODO: save message entities in home folder rather than working directory
         self.entitiesfilename = "entities_%s.pkl"%(login)
         self.conversationFrames = {}
         self.conversations = {}

@@ -31,6 +31,9 @@ from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocol
 import logging 
 logging.basicConfig(level=logging.WARNING)
 
+# from http://stackoverflow.com/questions/3702675/how-to-print-the-full-traceback-without-halting-the-program
+import traceback
+
 class WhaLayerInterface():
     """Interface class for connecting the layer object with the GUI."""
     def __init__(self):
@@ -49,7 +52,8 @@ class WhaLayer(YowInterfaceLayer):
     @ProtocolEntityCallback("message")
     def onMessage(self, messageProtocolEntity):
         sys.stderr.write("Received a message from %s of type %s\n"%(messageProtocolEntity.getFrom(),messageProtocolEntity.getType()))
-         # taken from yowsup cli (marks message as read, upon repeated receival, axolotl will do so anyways)
+         # taken from yowsup cli
+         # sends ack to server AND marks message as read (upon repeated receival axolotl will do so anyways)
         self.toLower(messageProtocolEntity.ack(True))
         if self.interface.eventTarget:
             self.interface.eventTarget.onIncomingMessage(messageProtocolEntity)
@@ -117,8 +121,8 @@ class WhaClient(object):
             print("\nExit")
             sys.exit(0)
         except: # catch *all* exceptions
-            e = sys.exc_info()[0]
-            sys.stderr.write("Unhandled exception: %s"%(e))
+            sys.stderr.write("Unhandled exception.")
+            traceback.print_exc()
 
 if __name__ == "__main__":
     client = WhaClient(("login","base64passwd"))
