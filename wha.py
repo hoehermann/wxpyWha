@@ -8,7 +8,7 @@ Main module for wxpyWha. A simple wxWidgets GUI wrapper atop yowsup.
 import wx
 import threading
 from whastack import WhaClient
-from gui.ConversationListFrame import ConversationListFrame
+from gui.ConversationListFrame import ConversationListFrame, IncomingMessageDataEvent, IncomingMessageDataEventType
 import sys
 
 # from pywhatsapp
@@ -20,6 +20,7 @@ DEBUG_GENERATE_MESSAGE = False
 """If true, don't actually connect to whatsapp (local testing only)."""
 DEBUG_PASSIVE = False
 
+# TODO: move this to ConversationListFrame
 class IncomingMessageHandler():
     """Handler for incoming messages."""
     def __init__(self, gui):
