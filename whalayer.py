@@ -37,7 +37,7 @@ import traceback
 class WhaLayerInterface():
     """Interface class for connecting the layer object with the GUI."""
     def __init__(self):
-        self.eventTarget = None
+        self.incomingMessageHandler = None
         self.sendMessage = None
 
 class WhaLayer(YowInterfaceLayer):
@@ -55,13 +55,17 @@ class WhaLayer(YowInterfaceLayer):
          # taken from yowsup cli
          # sends ack to server AND marks message as read (upon repeated receival axolotl will do so anyways)
         self.toLower(messageProtocolEntity.ack(True))
-        if self.interface.eventTarget:
-            self.interface.eventTarget.onIncomingMessage(messageProtocolEntity)
+        if self.interface.incomingMessageHandler:
+            self.interface.incomingMessageHandler.onIncomingMessage(messageProtocolEntity)
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
-        sys.stderr.write("Received a receipt, sending ack.\n")
+        sys.stderr.write("Received a receipt with ID %s, sending ack.\n"%(entity.getId()))
         self.toLower(entity.ack())
+        
+    @ProtocolEntityCallback("ack")
+    def onAck(self, entity):
+        sys.stderr.write("Received an acknowledgement with ID %s.\n"%(entity.getId()))
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self,layerEvent):
@@ -76,18 +80,19 @@ class WhaLayer(YowInterfaceLayer):
         if False:
             sys.stderr.write("Generating a local message for debbugging the GUI...\n")
             tmpe = TextMessageProtocolEntity("locally generated test message", _from="DEBUG@s.whatsapp.net")
-            self.interface.eventTarget.onIncomingMessage(tmpe)
+            self.interface.incomingMessageHandler.onIncomingMessage(tmpe)
 
     @ProtocolEntityCallback("failure")
     def onFailure(self, entity):
         sys.stderr.write("Login Failed. Reason: %s\n" % entity.getReason())
         
-    def sendMessage(self, jid, content):
+    def sendMessage(self, outgoingMessage):
+        sys.stderr.write("WhaLayer.sendMessage. MessageID is %s\n"%(outgoingMessage.getId()))
         if not self.connected:
             sys.stderr.write("Cannot send message. Not connected.\n")
         else:
-            outgoingMessage = TextMessageProtocolEntity(content, to = jid)
             self.toLower(outgoingMessage)
+            
 
 # TODO: move this into separate file
 class WhaClient(object):
@@ -100,28 +105,27 @@ class WhaClient(object):
         self.stack.setCredentials(credentials)
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
         
-    def setIncomingMessageHandler(self, eventTarget):
+    def setIncomingMessageHandler(self, incomingMessageHandler):
         interface = self.stack.getLayerInterface(WhaLayer)
-        interface.eventTarget = eventTarget
+        interface.incomingMessageHandler = incomingMessageHandler
 
-    def sendMessage(self, jid, content):
-        sys.stderr.write("WhaClient.sendMessage\n")
+    def sendMessage(self, outgoingMessage):
         interface = self.stack.getLayerInterface(WhaLayer)
-        interface.sendMessage(jid, content)
+        interface.sendMessage(outgoingMessage)
         
     def start(self):
         self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
         try:
             self.stack.loop()
         except AuthError as e:
-            print("Authentication Error: %s" % e.message)
+            sys.stderr.write("Authentication Error: %s\n"%e.message)
         except KeyboardInterrupt:
             # This is only relevant if this is the main module
             # TODO: disconnect cleanly
             print("\nExit")
             sys.exit(0)
         except: # catch *all* exceptions
-            sys.stderr.write("Unhandled exception.")
+            sys.stderr.write("Unhandled exception.\n")
             traceback.print_exc()
 
 if __name__ == "__main__":

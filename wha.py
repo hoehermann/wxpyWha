@@ -88,6 +88,8 @@ class ConversationFrame ( wxWha.ConversationFrame ):
             line = message.getBody()
         else:
             line = "Message is of unhandled type %s."%(t)
+            # NOTE: for t == "media", message.url is available, but content is encrypted. as of 2016-07-12, yowsup cannot decrypt
+            
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         self.ConversationTextControl.AppendText("(%s) %s: %s\n"%(formattedDate, sender, line))
     
@@ -100,13 +102,21 @@ class ConversationFrame ( wxWha.ConversationFrame ):
         """Sends a message via the WhaLayer."""
         jid = self.GetTitle()
         content = self.MessageTextControl.GetValue()
-        self.client.sendMessage(jid, content)
-        # NOTE: sendMessage return value gets lost?
-        # TODO: disable send button and wait here until server receipt
-        # create message for local display
-        # TODO: message entity is constructed here AND in the client WhaLayer. create copy instead?
         outgoingMessage = TextMessageProtocolEntity(content, to = jid)
+        self.client.sendMessage(outgoingMessage) # TODO: find out if pushing into the layer needs a deep copy
+        # NOTE: sendMessage return value gets lost?
+        # TODO: disable send button and wait for server acknowledgement
+        
+        # append to list of raw entities, sorted entites, save them
+        # append to this conversation
+        # TODO: encapsulate in one method
+        self.GetParent().messageEntities.append(outgoingMessage)
+        self.GetParent().appendMessage(outgoingMessage)
+        self.GetParent().saveMessageEntities()
         self.append(outgoingMessage)
+        
+        # clear input field
+        # TODO: only do so after server acknowledged
         self.MessageTextControl.Clear()
 
 class ConversationListFrame ( wxWha.ConversationListFrame ):
@@ -126,7 +136,10 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         self.populateConversationListBox()
         
     def appendMessage(self, message):
+        # TODO: rename method to "append"
         jid = message.getFrom()
+        if jid is None:
+            jid = message.getTo()
         if jid not in self.conversations:
             self.conversations[jid] = [message]
         else:
@@ -173,13 +186,16 @@ class ConversationListFrame ( wxWha.ConversationListFrame ):
         if DEBUG_PASSIVE:
             sys.stderr.write("Skipped writing entities due to DEBUG_PASSIVE.\n")
         else:
-            with open(self.entitiesfilename, 'wb') as f:
-                # do not save locally generated debug content
-                self.messageEntities = [m for m in self.messageEntities if m.getFrom() not in ["DEBUG@s.whatsapp.net"]]
-                #self.messageEntities = [m for m in self.messageEntities if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES]
-                pickle.dump(self.messageEntities, f)
-                f.close()
-                sys.stderr.write("Wrote %d entities.\n"%(len(self.messageEntities)))
+            try:
+                with open(self.entitiesfilename, 'wb') as f:
+                    # do not save locally generated debug content
+                    self.messageEntities = [m for m in self.messageEntities if m.getFrom() not in ["DEBUG@s.whatsapp.net"]]
+                    #self.messageEntities = [m for m in self.messageEntities if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES]
+                    pickle.dump(self.messageEntities, f)
+                    f.close()
+                    sys.stderr.write("Wrote %d entities.\n"%(len(self.messageEntities)))
+            except IOError as ioe:
+                sys.stderr.write("IOError: History was not stored.\n")
             
     def loadEntities(self):
         entities = []
