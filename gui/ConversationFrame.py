@@ -6,7 +6,7 @@ Application logic for the ConversationFrame.
 """
 
 import _generated
-
+import wx
 import datetime
 
 # from pywhatsapp
@@ -17,6 +17,9 @@ CONFIG_SHOW_NAMES = True
 
 """Name to use for own messages in conversation history."""
 CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
+
+"""If true, hitting the escape key closes the conversation frame."""
+CONFIG_ESCAPE_CLOSES = True
 
 class ConversationFrame ( _generated.ConversationFrame ):
     """
@@ -35,6 +38,16 @@ class ConversationFrame ( _generated.ConversationFrame ):
         self.client = client
         # TODO: do not abuse title as field for jid
         self.SetTitle(jid)
+        self.MessageTextControl.SetFocus()
+        self.ConversationTextControl.SetEditable(False)
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKeyPressed)
+        
+    def onKeyPressed( self, event ):
+        code = event.GetKeyCode()
+        if code == wx.WXK_ESCAPE and CONFIG_ESCAPE_CLOSES:
+            self.Close()
+        else:
+            event.Skip()
         
     def append(self, message):
         """Adds a message to this conversation history."""
