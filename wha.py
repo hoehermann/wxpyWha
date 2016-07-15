@@ -9,6 +9,7 @@ import wx
 import threading
 from whastack import WhaClient
 from gui.ConversationListFrame import ConversationListFrame, IncomingMessageHandler
+from whaphonebook import Phonebook
 import sys
 
 # from pywhatsapp
@@ -18,7 +19,7 @@ from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocol
 DEBUG_GENERATE_MESSAGE = False
 
 """If true, don't actually connect to whatsapp (local testing only)."""
-DEBUG_PASSIVE = False
+DEBUG_PASSIVE = True
 
 if __name__ == "__main__":
     if (len(sys.argv) != 3):
@@ -29,8 +30,9 @@ if __name__ == "__main__":
     
     app = wx.App()
     
+    phonebook = Phonebook.from_csv("phonebook.csv") # TODO: load from user directory rather than working directory
     client = WhaClient((login,base64passwd))
-    frame = ConversationListFrame(None, client, login)
+    frame = ConversationListFrame(None, client, login, phonebook)
     imh = IncomingMessageHandler(frame)
     client.setIncomingMessageHandler(imh)
     if not DEBUG_PASSIVE:

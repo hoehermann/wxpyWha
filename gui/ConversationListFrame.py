@@ -35,11 +35,12 @@ class IncomingMessageHandler():
         wx.PostEvent(self.gui, evt)
 
 class ConversationListFrame ( _generated.ConversationListFrame ):
-    def __init__(self, parent, client, login):
+    def __init__(self, parent, client, login, phonebook):
         _generated.ConversationListFrame.__init__(self, parent)
         self.Bind(INCOMING_MESSAGE_DATA_EVENT, self.onIncomingMessage)
         
         self.client = client
+        self.phonebook = phonebook
         self.SetTitle("wxpyWha %s"%(login))
         # TODO: save message entities in home folder rather than working directory
         self.entitiesfilename = "entities_%s.pkl"%(login)
@@ -62,7 +63,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         
     def populateConversationListBox(self):
         for jid in self.conversations:
-            self.ConversationListBox.Append(jid)
+            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
     
     def conversationFrame(self, jid, message = None):
         if jid in self.conversationFrames:
@@ -84,7 +85,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         index = event.GetSelection()
         if (index >= 0):
             self.ConversationListBox.Deselect(index)
-            jid = self.ConversationListBox.GetString(index)
+            jid = self.ConversationListBox.GetClientData(index)
             self.conversationFrame(jid)
         
     def onIncomingMessage(self, evt):
