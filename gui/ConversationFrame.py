@@ -29,20 +29,21 @@ class ConversationFrame ( _generated.ConversationFrame ):
     as well as an input area for answers and a send button.
     """
     
-    def __init__(self, parent, client, jid):
+    def __init__(self, parent, client, jid, title):
         """
         :param client: Reference to the WhaLayer doing the actual work (for sending messages)
         :param jid: The ID of this conversation (the other party or group chat).
         """
         _generated.ConversationFrame.__init__(self, parent)
         self.client = client
-        # TODO: do not abuse title as field for jid
-        self.SetTitle(jid)
+        self.jid = jid
+        self.SetTitle(title)
         self.MessageTextControl.SetFocus()
         self.ConversationTextControl.SetEditable(False)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyPressed)
         
     def onKeyPressed( self, event ):
+        # TODO: send message with return, add linebreak with shift-return
         code = event.GetKeyCode()
         if code == wx.WXK_ESCAPE and CONFIG_ESCAPE_CLOSES:
             self.Close()
@@ -83,9 +84,8 @@ class ConversationFrame ( _generated.ConversationFrame ):
         
     def onSendButtonClick( self, event ):
         """Sends a message via the WhaLayer."""
-        jid = self.GetTitle()
         content = self.MessageTextControl.GetValue()
-        outgoingMessage = TextMessageProtocolEntity(content, to = jid)
+        outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
         self.client.sendMessage(outgoingMessage) # TODO: find out if pushing into the layer needs a deep copy
         # NOTE: sendMessage return value gets lost?
         # TODO: disable send button and wait for server acknowledgement

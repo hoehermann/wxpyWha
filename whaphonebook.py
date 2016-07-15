@@ -4,7 +4,7 @@
 """@package docstring
 A phone book. It maps jids to names.
 
-Based on suggestion by https://github.com/sowerkoku .
+Code contributed by by https://github.com/sowerkoku . Thanks.
 """
 
 import csv
@@ -33,6 +33,7 @@ class Phonebook():
     
     def __init__(self):
         self.entries = {
+            # example of content
             "phone1@s.whatsapp.net" : "contact1",
             "phone2@s.whatsapp.net" : "contact2",
         }

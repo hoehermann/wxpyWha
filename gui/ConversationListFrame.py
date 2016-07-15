@@ -72,14 +72,14 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                 cf.append(message)
             cf.Raise()
         else:
-            cf = ConversationFrame(self, self.client, jid)
+            cf = ConversationFrame(self, self.client, jid, self.phonebook.jidToName(jid))
             for message in self.conversations[jid]:
                 cf.append(message)
             cf.Show()
             self.conversationFrames[jid] = cf
     
     def onConversationFrameDestroy(self, cf):
-        del self.conversationFrames[cf.GetTitle()]
+        del self.conversationFrames[cf.jid]
             
     def onListBox( self, event ):
         index = event.GetSelection()

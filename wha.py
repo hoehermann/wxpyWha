@@ -19,7 +19,7 @@ from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocol
 DEBUG_GENERATE_MESSAGE = False
 
 """If true, don't actually connect to whatsapp (local testing only)."""
-DEBUG_PASSIVE = True
+DEBUG_PASSIVE = False
 
 if __name__ == "__main__":
     if (len(sys.argv) != 3):
