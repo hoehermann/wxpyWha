@@ -24,8 +24,7 @@ class Phonebook():
                     this.entries[row[0]] = row[1]
         except IOError as ioe:
             sys.stderr.write("IOError: Phonebook was not loaded.\n")
-            traceback.print_exc()
-        except: # catch *all* exceptions
+        except:
             sys.stderr.write("Unhandled exception.\n")
             traceback.print_exc()
         sys.stderr.write("Phonebook has %d entries.\n"%(len(this.entries)))
@@ -43,6 +42,9 @@ class Phonebook():
             return jid
         else:
             return self.entries[jid]
+            
+    def get_jids(self):
+        return self.entries.keys()
             
 if __name__ == "__main__":
     phonebook = Phonebook.from_csv("phonebook.csv")

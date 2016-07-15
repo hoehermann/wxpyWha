@@ -49,6 +49,9 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         self.messageEntities = self.loadEntities()
         for message in sorted(self.messageEntities, key=lambda m:m.getTimestamp()):
             self.appendMessage(message)
+        for jid in phonebook.get_jids():
+            if jid not in self.conversations:
+                self.conversations[jid] = []
         self.populateConversationListBox()
         
     def appendMessage(self, message):
