@@ -45,6 +45,9 @@ if __name__ == "__main__":
             _from="DEBUG@s.whatsapp.net")
         imh.onIncomingMessage(tmpe)
     
+    icon = wx.Icon("wxpyWha.ico", wx.BITMAP_TYPE_ICO)
+    frame.SetIcon(icon)
+    
     frame.Show()
     app.MainLoop()
     

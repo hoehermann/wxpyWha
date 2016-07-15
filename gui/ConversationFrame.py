@@ -38,6 +38,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
         self.client = client
         self.jid = jid
         self.SetTitle(title)
+        self.SetIcon(self.GetParent().GetIcon())
         self.MessageTextControl.SetFocus()
         self.ConversationTextControl.SetEditable(False)
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyPressed)

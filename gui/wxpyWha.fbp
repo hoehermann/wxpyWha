@@ -394,7 +394,7 @@
             <property name="minimum_size"></property>
             <property name="name">ConversationListFrame</property>
             <property name="pos"></property>
-            <property name="size">269,459</property>
+            <property name="size">334,459</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Conversations</property>
