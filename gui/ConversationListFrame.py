@@ -21,6 +21,18 @@ class IncomingMessageDataEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, messageProtocolEntity):
         wx.PyCommandEvent.__init__(self, etype, eid)
         self.messageProtocolEntity = messageProtocolEntity
+        
+class IncomingMessageHandler():
+    """Handler for incoming messages."""
+    def __init__(self, gui):
+        self.gui = gui
+    def onIncomingMessage(self, messageProtocolEntity):
+        """
+        This is called from outside the wxApp context.
+        Generates a wxEvent and posts it to the wxApp main loop.
+        """
+        evt = IncomingMessageDataEvent(IncomingMessageDataEventType, -1, messageProtocolEntity)
+        wx.PostEvent(self.gui, evt)
 
 class ConversationListFrame ( _generated.ConversationListFrame ):
     def __init__(self, parent, client, login):
