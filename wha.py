@@ -25,12 +25,17 @@ if __name__ == "__main__":
     if (len(sys.argv) != 3):
         sys.stderr.write("Usage: %s login base64passwd"%(sys.argv[0]))
         sys.exit(1)
+    # TODO: add compatibility to yowsup configuration file
     login = sys.argv[1]
     base64passwd = sys.argv[2]
     
     app = wx.App()
     
     phonebook = Phonebook.from_csv("phonebook.csv") # TODO: load from user directory rather than working directory
+    if phonebook.is_empty():
+        phonebook = Phonebook.from_pidgin()
+    if phonebook.is_empty():
+        phonebook = Phonebook()
     client = WhaClient((login,base64passwd))
     frame = ConversationListFrame(None, client, login, phonebook)
     imh = IncomingMessageHandler(frame)
