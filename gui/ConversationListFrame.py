@@ -97,7 +97,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         self.saveMessageEntities()
         jid = message.getFrom()
         if jid not in self.conversations:
-            self.ConversationListBox.Append(jid)
+            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
         self.appendMessage(message)
         self.conversationFrame(jid, message)
             
