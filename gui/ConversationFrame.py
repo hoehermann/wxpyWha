@@ -44,12 +44,20 @@ class ConversationFrame ( _generated.ConversationFrame ):
         self.Bind(wx.EVT_CHAR_HOOK, self.onKeyPressed)
         
     def onKeyPressed( self, event ):
-        # TODO: send message with return, add linebreak with shift-return
+        """Handler for all kestrokes on this frame."""
         code = event.GetKeyCode()
-        if code == wx.WXK_ESCAPE and CONFIG_ESCAPE_CLOSES:
+        if code == wx.WXK_RETURN:
+            if event.ShiftDown():
+                # shift+return produces a new line
+                event.Skip() # event is forwarded to next control
+            else:
+                # plain return sends message
+                self.onSendButtonClick(event) # forwarding the event probably isn't correct
+        elif code == wx.WXK_ESCAPE and CONFIG_ESCAPE_CLOSES:
             self.Close()
         else:
-            event.Skip()
+            # all other keystrokes
+            event.Skip() # event is forwarded to next control
         
     def append(self, message):
         """Adds a message to this conversation history."""
@@ -86,19 +94,20 @@ class ConversationFrame ( _generated.ConversationFrame ):
     def onSendButtonClick( self, event ):
         """Sends a message via the WhaLayer."""
         content = self.MessageTextControl.GetValue()
-        outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-        self.client.sendMessage(outgoingMessage) # TODO: find out if pushing into the layer needs a deep copy
-        # NOTE: sendMessage return value gets lost?
-        # TODO: disable send button and wait for server acknowledgement
-        
-        # append to list of raw entities, sorted entites, save them
-        # append to this conversation
-        # TODO: encapsulate in one method
-        self.GetParent().messageEntities.append(outgoingMessage)
-        self.GetParent().appendMessage(outgoingMessage)
-        self.GetParent().saveMessageEntities()
-        self.append(outgoingMessage)
-        
-        # clear input field
-        # TODO: only do so after server acknowledged
-        self.MessageTextControl.Clear()
+        if content:
+            outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
+            self.client.sendMessage(outgoingMessage) # TODO: find out if pushing into the layer needs a deep copy
+            # NOTE: sendMessage return value gets lost?
+            # TODO: disable send button and wait for server acknowledgement
+            
+            # append to list of raw entities, sorted entites, save them
+            # append to this conversation
+            # TODO: encapsulate in one method
+            self.GetParent().messageEntities.append(outgoingMessage)
+            self.GetParent().appendMessage(outgoingMessage)
+            self.GetParent().saveMessageEntities()
+            self.append(outgoingMessage)
+            
+            # clear input field
+            # TODO: only do so after server acknowledged
+            self.MessageTextControl.Clear()
