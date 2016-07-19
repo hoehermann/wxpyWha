@@ -45,6 +45,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         # TODO: save message entities in home folder rather than working directory
         self.entitiesfilename = "entities_%s.pkl"%(login)
         self.conversationFrames = {}
+        # TODO: messages are stored as unsorted list and in dictionary sorted by origin. clean up and have one data structure only.
         self.conversations = {}
         self.messageEntities = self.loadEntities()
         for message in sorted(self.messageEntities, key=lambda m:m.getTimestamp()):

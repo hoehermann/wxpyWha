@@ -84,7 +84,15 @@ class ConversationFrame ( _generated.ConversationFrame ):
             # NOTE: for t == "media", message.url is available, but content is encrypted. as of 2016-07-12, yowsup cannot decrypt
             
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
-        self.ConversationTextControl.AppendText("(%s) %s: %s\n"%(formattedDate, sender, line))
+        self.ConversationTextControl.AppendText(
+            "(%s) %s: %s\n"%(
+                formattedDate, 
+                sender, 
+                line.encode("utf-8") 
+                # I have no idea why this encode("utf-8") is needed for a message containing 😊, but messages containing 😀😉🐘💨☠ work fine without
+                # TODO: Research how python unicode handling interacts with wxPython unicode handling
+            )
+        )
     
     def onClose( self, event ):
         """Notifies the parent ConversationListFrame before destruction."""

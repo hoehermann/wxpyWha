@@ -13,6 +13,15 @@ It looks like this:
  *  Answering a conversation with a text message. Initiating a conversation is not supported.
  *  Supports unicode emojis.
 
+## Dependencies
+
+Depends on [yowsup](https://github.com/tgalal/yowsup) and [wxPython](https://www.wxpython.org).
+
+* yowsup can usually be installed with `pip install yowsup2` (Linux and Windows)
+* wxPython can be installed via package manager (Linux distributions) or downloaded from their website (Windows).
+
+See the respective project websites for more detailed installation instructions.
+
 ## Legal
 
 ### Icon
