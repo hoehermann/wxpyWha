@@ -10,14 +10,14 @@ It looks like this:
 ## Features
 
  *  Receive text messages from single person conversations and group chats.
- *  Answering a conversation with a text message. Initiating a conversation is not supported.
- *  Supports unicode emojis.
+ *  Answering a conversation with a text message.
+ *  Supports unicode emojis and other characters.
 
 ## Dependencies
 
 Depends on [yowsup](https://github.com/tgalal/yowsup) and [wxPython](https://www.wxpython.org).
 
-* yowsup can usually be installed with `pip install yowsup2` (Linux and Windows)
+* yowsup can usually be installed with `pip install yowsup2` (Linux and Windows). Builing on Windows currently fails due to a [bug](https://github.com/tgalal/python-axolotl-curve25519/issues/5).
 * wxPython can be installed via package manager (Linux distributions) or downloaded from their website (Windows).
 
 See the respective project websites for more detailed installation instructions.
