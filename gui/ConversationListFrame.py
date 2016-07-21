@@ -45,47 +45,59 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         # TODO: save message entities in home folder rather than working directory
         self.entitiesfilename = "entities_%s.pkl"%(login)
         self.conversationFrames = {}
-        # TODO: messages are stored as unsorted list and in dictionary sorted by origin. clean up and have one data structure only.
         self.conversations = {}
-        self.messageEntities = self.loadEntities()
-        for message in sorted(self.messageEntities, key=lambda m:m.getTimestamp()):
-            self.appendMessage(message)
+        self.loadMessages()
+
+        # create empty conversations for each contact in phonebook
         for jid in phonebook.get_jids():
             if jid not in self.conversations:
                 self.conversations[jid] = []
-        self.populateConversationListBox()
+                
+    def updateConversationListBox(self, jid):
+        if jid not in self.conversations:
+            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
         
-    def appendMessage(self, message):
-        # TODO: rename method to "append"
+    def append(self, message, show=True, save=True):
+        # find jid
         jid = message.getFrom()
         if jid is None:
             jid = message.getTo()
+            
+        # update ListBox for new conversations
+        self.updateConversationListBox(jid)
+            
+        # put message into storage
         if jid not in self.conversations:
             self.conversations[jid] = [message]
         else:
             self.conversations[jid].append(message)
         
-    def populateConversationListBox(self):
-        for jid in self.conversations:
-            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
+        # save messages
+        if save:
+            self.saveMessages()
+            
+        # show/create ConversationFrame
+        if show:
+            self.conversationFrame(jid, message)
     
     def conversationFrame(self, jid, message = None):
-        if jid in self.conversationFrames:
-            cf = self.conversationFrames[jid]
+        if jid in self.conversationFrames: # frame exists
+            cf = self.conversationFrames[jid] # get frame reference
             if message:
-                cf.append(message)
-            cf.Raise()
-        else:
+                cf.append(message) # append message
+            cf.Raise() # bring to front
+        else: # frame does not exist
+            # create frame
             cf = ConversationFrame(self, self.client, jid, self.phonebook.jidToName(jid))
-            for message in self.conversations[jid]:
+            self.conversationFrames[jid] = cf # save frame reference
+            for message in self.conversations[jid]: # append all messages
                 cf.append(message)
-            cf.Show()
-            self.conversationFrames[jid] = cf
+            cf.Show() # show frame
     
     def onConversationFrameDestroy(self, cf):
-        del self.conversationFrames[cf.jid]
+        del self.conversationFrames[cf.jid] # remove reference
             
-    def onListBox( self, event ):
+    def onListBox(self, event):
         index = event.GetSelection()
         if (index >= 0):
             self.ConversationListBox.Deselect(index)
@@ -94,35 +106,39 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         
     def onIncomingMessage(self, evt):
         message = evt.messageProtocolEntity
-        self.messageEntities.append(message)
-        self.saveMessageEntities()
-        jid = message.getFrom()
-        if jid not in self.conversations:
-            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
-        self.appendMessage(message)
-        self.conversationFrame(jid, message)
+        self.append(message)
             
-    def saveMessageEntities(self):
+    def saveMessages(self):
         if DEBUG_SKIP_WRITE_HISTORY:
             sys.stderr.write("Skipped writing entities due to DEBUG_SKIP_WRITE_HISTORY.\n")
         else:
             try:
                 with open(self.entitiesfilename, 'wb') as f:
                     # do not save locally generated debug content
-                    self.messageEntities = [m for m in self.messageEntities if m.getFrom() not in ["DEBUG@s.whatsapp.net"]]
-                    #self.messageEntities = [m for m in self.messageEntities if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES]
-                    pickle.dump(self.messageEntities, f)
+                    conversations = self.conversations
+                    conversations = {k: v for k, v in conversations.iteritems() if k not in ["DEBUG@s.whatsapp.net"]}
+                    #conversations = {k: v for k, v in conversations.iteritems()  if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
+                    sys.stderr.write("Writing %d messages...\n"%(sum(map(len,conversations.values()))))
+                    pickle.dump(self.conversations, f)
                     f.close()
-                    sys.stderr.write("Wrote %d entities.\n"%(len(self.messageEntities)))
             except IOError as ioe:
                 sys.stderr.write("IOError: History was not stored.\n")
             
-    def loadEntities(self):
-        entities = []
+    def loadMessages(self):
+        self.conversations = {}
         try:
             with open(self.entitiesfilename, 'rb') as f:
-                entities = pickle.load(f)
+                data = pickle.load(f)
+                if isinstance(data, dict):
+                    for jid in data:
+                        self.updateConversationListBox(jid)
+                    self.conversations = data
+                elif isinstance(data, list):
+                    sys.stderr.write("Data is seems to be old list format. Converting...\n")
+                    for message in sorted(data, key=lambda m:m.getTimestamp()):
+                        self.append(message,False,False)
+                else:
+                    sys.stderr.write("Data is neither dict nor list.\n")
         except IOError as ioe:
             sys.stderr.write("IOError: History was not loaded.\n")
-        sys.stderr.write("Loaded %d entities.\n"%(len(entities)))
-        return entities
+        sys.stderr.write("Loaded %d messages.\n"%(sum(map(len,self.conversations.values()))))

@@ -108,13 +108,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
             # NOTE: sendMessage return value gets lost?
             # TODO: disable send button and wait for server acknowledgement
             
-            # append to list of raw entities, sorted entites, save them
-            # append to this conversation
-            # TODO: encapsulate in one method
-            self.GetParent().messageEntities.append(outgoingMessage)
-            self.GetParent().appendMessage(outgoingMessage)
-            self.GetParent().saveMessageEntities()
-            self.append(outgoingMessage)
+            self.GetParent().append(outgoingMessage)
             
             # clear input field
             # TODO: only do so after server acknowledged
