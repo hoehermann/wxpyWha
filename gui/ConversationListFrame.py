@@ -50,6 +50,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
 
         # create empty conversations for each contact in phonebook
         for jid in phonebook.get_jids():
+            self.updateConversationListBox(jid)
             if jid not in self.conversations:
                 self.conversations[jid] = []
                 

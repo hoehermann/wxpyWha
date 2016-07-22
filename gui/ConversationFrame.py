@@ -12,8 +12,15 @@ import datetime
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
-"""If true, names instead of JIDs are shown in the conversation history (if set by the participant)."""
+"""If True, names instead of JIDs are shown in the conversation history (if set by the participant)."""
 CONFIG_SHOW_NAMES = True
+
+"""
+If True, phonebook is automatically filled with names and numbers of incoming messages.
+This doesn't do anthing useful, yet.
+Only active, if CONFIG_SHOW_NAMES is True.
+"""
+CONFIG_PHONEBOOK_AUTO_ADD = True
 
 """Name to use for own messages in conversation history."""
 CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
@@ -66,16 +73,23 @@ class ConversationFrame ( _generated.ConversationFrame ):
             # outgoing message
             # displayed in conversation as sent from SELF
             jid = message.getTo()
-            sender = CONGFIG_OWN_NAME
+            sender_name = CONGFIG_OWN_NAME
         else:
             # incoming message
             if CONFIG_SHOW_NAMES:
-                sender = message.getNotify()
+                # show names of contacts
+                sender_name = message.getNotify()
+                if CONFIG_PHONEBOOK_AUTO_ADD:
+                    sender_jid = jid
+                    if message.isGroupMessage():
+                        sender_jid = message.getParticipant()
+                    self.GetParent().phonebook.add(sender_jid, sender_name)
             else:
+                # do not resolve names, show jids instead
                 if message.isGroupMessage():
-                    sender = message.getParticipant()
+                    sender_name = message.getParticipant()
                 else:
-                    sender = jid
+                    sender_name = jid
         t = message.getType()
         if t == "text":
             line = message.getBody()
@@ -87,7 +101,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
         self.ConversationTextControl.AppendText(
             "(%s) %s: %s\n"%(
                 formattedDate, 
-                sender, 
+                sender_name, 
                 line.encode("utf-8") 
                 # I have no idea why this encode("utf-8") is needed for a message containing 😊, but messages containing 😀😉🐘💨☠ work fine without
                 # TODO: Research how python unicode handling interacts with wxPython unicode handling

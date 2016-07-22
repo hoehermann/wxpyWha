@@ -69,6 +69,10 @@ class Phonebook():
         
     def is_empty(self):
         return not bool(self.entries)
+        
+    def add(self, jid, name):
+        #sys.stderr.write("Added name %s for jid %s.\n"%(name, jid))
+        self.entries[jid] = name
 
     def jidToName(self, jid):
         if jid not in self.entries:
