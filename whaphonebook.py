@@ -71,8 +71,9 @@ class Phonebook():
         return not bool(self.entries)
         
     def add(self, jid, name):
-        #sys.stderr.write("Added name %s for jid %s.\n"%(name, jid))
-        self.entries[jid] = name
+        if jid not in self.entries:
+            sys.stderr.write("Added name %s for jid %s to phonebook.\n"%(name, jid))
+            self.entries[jid] = name
 
     def jidToName(self, jid):
         if jid not in self.entries:
