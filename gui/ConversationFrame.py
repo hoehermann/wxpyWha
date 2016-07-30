@@ -20,7 +20,7 @@ If True, phonebook is automatically filled with names and numbers of incoming me
 This doesn't do anthing useful, yet.
 Only active, if CONFIG_SHOW_NAMES is True.
 """
-CONFIG_PHONEBOOK_AUTO_ADD = True
+CONFIG_PHONEBOOK_AUTO_ADD = False
 
 """Name to use for own messages in conversation history."""
 CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
@@ -79,11 +79,14 @@ class ConversationFrame ( _generated.ConversationFrame ):
             if CONFIG_SHOW_NAMES:
                 # show names of contacts
                 sender_name = message.getNotify()
-                if CONFIG_PHONEBOOK_AUTO_ADD:
+                if sender_name and CONFIG_PHONEBOOK_AUTO_ADD:
+                    # automatically add contacts to phonebook
                     sender_jid = jid
                     if message.isGroupMessage():
                         sender_jid = message.getParticipant()
-                    self.GetParent().phonebook.add(sender_jid, sender_name)
+                    if self.GetParent().phonebook.add(sender_jid, sender_name):
+                        # this was a previously unknown contact: save phonebook file
+                        self.GetParent().phonebook.to_csv_file()
             else:
                 # do not resolve names, show jids instead
                 if message.isGroupMessage():

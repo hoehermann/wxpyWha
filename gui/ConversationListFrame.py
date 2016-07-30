@@ -56,7 +56,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                 
     def updateConversationListBox(self, jid):
         if jid not in self.conversations:
-            self.ConversationListBox.Append(self.phonebook.jidToName(jid),jid)
+            self.ConversationListBox.Append(self.phonebook.jid_to_name(jid),jid)
         
     def append(self, message, show=True, save=True):
         # find jid
@@ -89,7 +89,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             cf.Raise() # bring to front
         else: # frame does not exist
             # create frame
-            cf = ConversationFrame(self, self.client, jid, self.phonebook.jidToName(jid))
+            cf = ConversationFrame(self, self.client, jid, self.phonebook.jid_to_name(jid))
             self.conversationFrames[jid] = cf # save frame reference
             for message in self.conversations[jid]: # append all messages
                 cf.append(message)
@@ -118,7 +118,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                     # do not save locally generated debug content
                     conversations = self.conversations
                     conversations = {k: v for k, v in conversations.iteritems() if k not in ["DEBUG@s.whatsapp.net"]}
-                    #conversations = {k: v for k, v in conversations.iteritems()  if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
+                    #conversations = {k: v for k, v in conversations.iteritems() if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
                     sys.stderr.write("Writing %d messages...\n"%(sum(map(len,conversations.values()))))
                     pickle.dump(self.conversations, f)
                     f.close()
@@ -131,7 +131,13 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             with open(self.entitiesfilename, 'rb') as f:
                 data = pickle.load(f)
                 if isinstance(data, dict):
-                    for jid in data:
+                    # history is a dict (conversation jids mapped to list of messages)
+                    comparator = lambda jid:jid # default: do not sort
+                    if not self.phonebook.is_empty():
+                        # phonebook is present: sort list of conversations by name
+                        comparator = lambda jid:self.phonebook.jid_to_name(jid)
+                    # add conversations into gui
+                    for jid in sorted(data, key=comparator):
                         self.updateConversationListBox(jid)
                     self.conversations = data
                 elif isinstance(data, list):

@@ -28,10 +28,12 @@ class Phonebook():
             "phone1@s.whatsapp.net" : "contact1",
             "phone2@s.whatsapp.net" : "contact2",
         }
+        self.filename = None
     
     @classmethod
     def from_csv(cls, csv_file_name):
         this = cls()
+        this.filename = csv_file_name
         this.entries = {}
         try:
             with open(csv_file_name, 'rb') as csvfile:
@@ -74,15 +76,35 @@ class Phonebook():
         if jid not in self.entries:
             sys.stderr.write("Added name %s for jid %s to phonebook.\n"%(name, jid))
             self.entries[jid] = name
+            return True
+        else:
+            return False
 
-    def jidToName(self, jid):
+    def jid_to_name(self, jid):
         if jid not in self.entries:
+            sys.stderr.write("Phonebook contains no name for jid %s.\n"%(jid))
             return jid
         else:
             return self.entries[jid]
             
     def get_jids(self):
         return self.entries.keys()
+            
+    def to_csv_file(self, csv_file_name = None):
+        if csv_file_name is None:
+            csv_file_name = self.filename
+        if csv_file_name is not None:
+            try:
+                with open(csv_file_name, 'wb') as csvfile:
+                    writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_MINIMAL)
+                    for jid, name in self.entries.items():
+                        writer.writerow([jid, name])
+                    sys.stderr.write("Wrote %d Phonebook entries into file.\n"%(len(self.entries)))
+            except IOError as ioe:
+                sys.stderr.write("IOError: Phonebook was not stored.\n")
+            except:
+                sys.stderr.write("Unhandled exception.\n")
+                traceback.print_exc()
             
 if __name__ == "__main__":
     phonebook = Phonebook.from_csv("phonebook.csv")
