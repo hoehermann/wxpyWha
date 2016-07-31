@@ -10,34 +10,35 @@ import wx
 import pickle
 import sys
 from ConversationFrame import ConversationFrame
+from yowsup.layers.protocol_messages.protocolentities import MessageProtocolEntity
 
 """If true, message entities are not saved"""
-DEBUG_SKIP_WRITE_HISTORY = False
+DEBUG_SKIP_WRITE_HISTORY = True
 
-IncomingMessageDataEventType = wx.NewEventType()
-INCOMING_MESSAGE_DATA_EVENT = wx.PyEventBinder(IncomingMessageDataEventType, 1)
-class IncomingMessageDataEvent(wx.PyCommandEvent):
+DataEventType = wx.NewEventType()
+DATA_EVENT = wx.PyEventBinder(DataEventType, 1)
+class DataEvent(wx.PyCommandEvent):
     """Custom event type for receiving messages."""
-    def __init__(self, etype, eid, messageProtocolEntity):
+    def __init__(self, etype, eid, data):
         wx.PyCommandEvent.__init__(self, etype, eid)
-        self.messageProtocolEntity = messageProtocolEntity
+        self.data = data
         
-class IncomingMessageHandler():
+class YowsupEventHandler():
     """Handler for incoming messages."""
     def __init__(self, gui):
         self.gui = gui
-    def onIncomingMessage(self, messageProtocolEntity):
+    def handleEvent(self, data):
         """
         This is called from outside the wxApp context.
         Generates a wxEvent and posts it to the wxApp main loop.
         """
-        evt = IncomingMessageDataEvent(IncomingMessageDataEventType, -1, messageProtocolEntity)
+        evt = DataEvent(DataEventType, -1, data)
         wx.PostEvent(self.gui, evt)
 
 class ConversationListFrame ( _generated.ConversationListFrame ):
     def __init__(self, parent, client, login, phonebook):
         _generated.ConversationListFrame.__init__(self, parent)
-        self.Bind(INCOMING_MESSAGE_DATA_EVENT, self.onIncomingMessage)
+        self.Bind(DATA_EVENT, self.onYowsupEvent)
         
         self.client = client
         self.phonebook = phonebook
@@ -105,8 +106,28 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             jid = self.ConversationListBox.GetClientData(index)
             self.conversationFrame(jid)
         
+    def onYowsupEvent(self, evt):
+        if (isinstance(evt.data, MessageProtocolEntity)):
+            self.onIncomingMessage(evt)
+        elif (isinstance(evt.data,tuple)):
+            if (evt.data[0] == "sendMessage"):
+                _, message, status = evt.data
+                jid = message.getTo()
+                if jid in self.conversationFrames:
+                    self.conversationFrames[jid].onMessageSent(status, message)
+            elif (evt.data[0] == "ack"):
+                _, entity = evt.data
+                if (entity.getClass() == "message"):
+                    jid = entity._from
+                    if jid in self.conversationFrames:
+                        self.conversationFrames[jid].onMessageAcknowledged()
+            else:
+                sys.stderr.write("I dont handle this kind of Yowsup event yet.\n")
+        else:
+            sys.stderr.write("I dont handle this kind of Yowsup event yet.\n")
+        
     def onIncomingMessage(self, evt):
-        message = evt.messageProtocolEntity
+        message = evt.data
         self.append(message)
             
     def saveMessages(self):

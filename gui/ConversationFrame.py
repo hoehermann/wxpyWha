@@ -120,13 +120,26 @@ class ConversationFrame ( _generated.ConversationFrame ):
         """Sends a message via the WhaLayer."""
         content = self.MessageTextControl.GetValue()
         if content:
+            self.StatusBar.SetStatusText("Sending message..")
             outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-            self.client.sendMessage(outgoingMessage) # TODO: find out if pushing into the layer needs a deep copy
-            # NOTE: sendMessage return value gets lost?
-            # TODO: disable send button and wait for server acknowledgement
-            
-            self.GetParent().append(outgoingMessage)
-            
-            # clear input field
-            # TODO: only do so after server acknowledged
-            self.MessageTextControl.Clear()
+            sent = self.client.sendMessage(outgoingMessage)
+            # TODO: find out if pushing into the layer needs a deep copy
+            # TODO: find out why sent is always None
+            self.MessageTextControl.SetEditable(False)
+            self.SendButton.Enable(False)
+        else:
+            self.StatusBar.SetStatusText("Empty message was ignored.")
+
+    def onMessageSent(self, status, message = None):
+        if (isinstance(status, bool) and status):
+            self.StatusBar.SetStatusText("Sending message...")
+            self.GetParent().append(message)
+        else:
+            self.StatusBar.SetStatusText(status)
+        self.MessageTextControl.SetEditable(True)
+        self.SendButton.Enable(True)
+        
+    def onMessageAcknowledged(self):
+        self.StatusBar.SetStatusText("Sent message.")
+        # clear input field
+        self.MessageTextControl.Clear()

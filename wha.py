@@ -8,7 +8,7 @@ Main module for wxpyWha. A simple wxWidgets GUI wrapper atop yowsup.
 import wx
 import threading
 from whastack import WhaClient
-from gui.ConversationListFrame import ConversationListFrame, IncomingMessageHandler
+from gui.ConversationListFrame import ConversationListFrame, YowsupEventHandler
 from whaphonebook import Phonebook
 import sys
 
@@ -38,8 +38,8 @@ if __name__ == "__main__":
         phonebook = Phonebook()
     client = WhaClient((login,base64passwd))
     frame = ConversationListFrame(None, client, login, phonebook)
-    imh = IncomingMessageHandler(frame)
-    client.setIncomingMessageHandler(imh)
+    handler = YowsupEventHandler(frame)
+    client.setYowsupEventHandler(handler)
     if not DEBUG_PASSIVE:
         backgroundClient = threading.Thread(target=client.start)
         backgroundClient.daemon = True

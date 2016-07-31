@@ -39,9 +39,9 @@ class WhaClient(object):
         self.stack.setCredentials(credentials)
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
         
-    def setIncomingMessageHandler(self, incomingMessageHandler):
+    def setYowsupEventHandler(self, handler):
         interface = self.stack.getLayerInterface(WhaLayer)
-        interface.incomingMessageHandler = incomingMessageHandler
+        interface.enventHandler = handler
 
     def sendMessage(self, outgoingMessage):
         interface = self.stack.getLayerInterface(WhaLayer)

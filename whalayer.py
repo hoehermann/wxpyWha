@@ -23,7 +23,7 @@ import sys
 class WhaLayerInterface():
     """Interface class for connecting the layer object with the GUI."""
     def __init__(self):
-        self.incomingMessageHandler = None
+        self.enventHandler = None
         self.sendMessage = None
 
 class WhaLayer(YowInterfaceLayer):
@@ -41,8 +41,8 @@ class WhaLayer(YowInterfaceLayer):
          # taken from yowsup cli
          # sends ack to server AND marks message as read (upon repeated receival axolotl will do so anyways)
         self.toLower(messageProtocolEntity.ack(True))
-        if self.interface.incomingMessageHandler:
-            self.interface.incomingMessageHandler.onIncomingMessage(messageProtocolEntity)
+        if self.interface.enventHandler:
+            self.interface.enventHandler.handleEvent(messageProtocolEntity)
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
@@ -51,7 +51,10 @@ class WhaLayer(YowInterfaceLayer):
         
     @ProtocolEntityCallback("ack")
     def onAck(self, entity):
-        sys.stderr.write("Received an acknowledgement with ID %s.\n"%(entity.getId()))
+        """This indicates that the WhatsApp server received our message."""
+        #sys.stderr.write("Received an acknowledgement with ID %s.\n"%(entity.getId()))
+        if self.interface.enventHandler:
+            self.interface.enventHandler.handleEvent(("ack",entity))
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self,layerEvent):
@@ -68,9 +71,14 @@ class WhaLayer(YowInterfaceLayer):
         sys.stderr.write("Login Failed. Reason: %s\n" % entity.getReason())
         
     def sendMessage(self, outgoingMessage):
-        sys.stderr.write("WhaLayer.sendMessage. MessageID is %s\n"%(outgoingMessage.getId()))
+        #sys.stderr.write("WhaLayer.sendMessage. MessageID is %s\n"%(outgoingMessage.getId()))
         if not self.connected:
             sys.stderr.write("Cannot send message. Not connected.\n")
+            if self.interface.enventHandler:
+                self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,"Cannot send message. Not connected."))
         else:
             self.toLower(outgoingMessage)
+            if self.interface.enventHandler:
+                self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,True))
+            
 
