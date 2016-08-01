@@ -120,7 +120,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
         """Sends a message via the WhaLayer."""
         content = self.MessageTextControl.GetValue()
         if content:
-            self.StatusBar.SetStatusText("Sending message..")
+            self.StatusBar.SetStatusText("Sending message...")
             outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
             sent = self.client.sendMessage(outgoingMessage)
             # TODO: find out if pushing into the layer needs a deep copy
@@ -131,15 +131,23 @@ class ConversationFrame ( _generated.ConversationFrame ):
             self.StatusBar.SetStatusText("Empty message was ignored.")
 
     def onMessageSent(self, status, message = None):
-        if (isinstance(status, bool) and status):
-            self.StatusBar.SetStatusText("Sending message...")
-            self.GetParent().append(message)
+        """Handler for information about a message being successfully sent or not."""
+        if (isinstance(status, bool)):
+            if (status):
+                # message reported sent
+                self.StatusBar.SetStatusText("Message sent, waiting for server response...")
+                self.GetParent().append(message)
+            else:
+                # this actually is never used
+                self.StatusBar.SetStatusText("Unknown error occurred.")
         else:
+            # an error string was given, display it
             self.StatusBar.SetStatusText(status)
+        # re-enable GUI so the message can be edited and/or sent again
         self.MessageTextControl.SetEditable(True)
         self.SendButton.Enable(True)
         
     def onMessageAcknowledged(self):
-        self.StatusBar.SetStatusText("Sent message.")
-        # clear input field
+        """Handler for server-side acknowledgements."""
+        self.StatusBar.SetStatusText("Message received by server.")
         self.MessageTextControl.Clear()

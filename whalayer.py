@@ -55,6 +55,20 @@ class WhaLayer(YowInterfaceLayer):
         #sys.stderr.write("Received an acknowledgement with ID %s.\n"%(entity.getId()))
         if self.interface.enventHandler:
             self.interface.enventHandler.handleEvent(("ack",entity))
+            
+    # TODO: find out how to receive "nack"s. they are stored in entities like this:
+    """
+    <iq type="error" from="GROUP@g.us" id="4">
+    <error text="forbidden" code="403">
+    </error>
+    </iq>
+    """
+    # but they don't appear here. maybe they are discarded on a lower level
+    """
+    @ProtocolEntityCallback("iq")
+    def onIq(self, entity):
+        print(entity)
+    """
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self,layerEvent):
@@ -78,6 +92,9 @@ class WhaLayer(YowInterfaceLayer):
                 self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,"Cannot send message. Not connected."))
         else:
             self.toLower(outgoingMessage)
+            # threading: https://bugs.bitlbee.org/browser/python/wa.py suggests, using
+            # self.getStack().execDetached(lambda:self.toLower(outgoingMessage))
+            # would be the correct way to send a message
             if self.interface.enventHandler:
                 self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,True))
             

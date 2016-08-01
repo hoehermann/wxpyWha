@@ -111,24 +111,30 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             self.onIncomingMessage(evt)
         elif (isinstance(evt.data,tuple)):
             if (evt.data[0] == "sendMessage"):
-                _, message, status = evt.data
-                jid = message.getTo()
-                if jid in self.conversationFrames:
-                    self.conversationFrames[jid].onMessageSent(status, message)
+                self.onMessageSent(evt)
             elif (evt.data[0] == "ack"):
-                _, entity = evt.data
-                if (entity.getClass() == "message"):
-                    jid = entity._from
-                    if jid in self.conversationFrames:
-                        self.conversationFrames[jid].onMessageAcknowledged()
+                self.onMessageAcknowledged(evt)
             else:
-                sys.stderr.write("I dont handle this kind of Yowsup event yet.\n")
+                sys.stderr.write("Unknown Yowsup event \"%s\".\n"%(evt.data[0]))
         else:
-            sys.stderr.write("I dont handle this kind of Yowsup event yet.\n")
+            sys.stderr.write("Unknown Yowsup event \"%s\".\n"%(str(evt.data.__class__)))
         
     def onIncomingMessage(self, evt):
         message = evt.data
         self.append(message)
+        
+    def onMessageSent(self, evt):
+        _, message, status = evt.data
+        jid = message.getTo()
+        if jid in self.conversationFrames:
+            self.conversationFrames[jid].onMessageSent(status, message)
+            
+    def onMessageAcknowledged(self, evt):
+        _, entity = evt.data
+        if (entity.getClass() == "message"):
+            jid = entity._from
+            if jid in self.conversationFrames:
+                self.conversationFrames[jid].onMessageAcknowledged()
             
     def saveMessages(self):
         if DEBUG_SKIP_WRITE_HISTORY:
