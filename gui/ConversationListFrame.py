@@ -13,7 +13,7 @@ from ConversationFrame import ConversationFrame
 from yowsup.layers.protocol_messages.protocolentities import MessageProtocolEntity
 
 """If true, message entities are not saved"""
-DEBUG_SKIP_WRITE_HISTORY = True
+DEBUG_SKIP_WRITE_HISTORY = False
 
 DataEventType = wx.NewEventType()
 DATA_EVENT = wx.PyEventBinder(DataEventType, 1)
