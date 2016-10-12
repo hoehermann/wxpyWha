@@ -171,6 +171,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                     sys.stderr.write("Data is seems to be old list format. Converting...\n")
                     for message in sorted(data, key=lambda m:m.getTimestamp()):
                         self.append(message,False,False)
+                    self.saveMessages()
                 else:
                     sys.stderr.write("Data is neither dict nor list.\n")
         except IOError as ioe:

@@ -33,7 +33,7 @@ To initiate a conversation, follow these steps:
 
 Depends on [yowsup](https://github.com/tgalal/yowsup) and [wxPython](https://www.wxpython.org).
 
- *  yowsup can usually be installed with `pip install yowsup2` (Linux and Windows). Builing on Windows currently fails due to a [bug](https://github.com/tgalal/python-axolotl-curve25519/issues/5).
+ *  yowsup can usually be installed with `pip install yowsup2` (Linux and Windows). Building yowsup's implementation of Curve25519 currently fails on Windows due to a [bug](https://github.com/tgalal/python-axolotl-curve25519/issues/5).
  *  wxPython can be installed via package manager (Linux distributions) or downloaded from their website (Windows).
 
 See the respective project websites for more detailed installation instructions.
