@@ -142,12 +142,12 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         else:
             try:
                 with open(self.entitiesfilename, 'wb') as f:
-                    # do not save locally generated debug content
                     conversations = self.conversations
+                    # do not save locally generated debug content
                     conversations = {k: v for k, v in conversations.iteritems() if k not in ["DEBUG@s.whatsapp.net"]}
                     #conversations = {k: v for k, v in conversations.iteritems() if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
                     sys.stderr.write("Writing %d messages...\n"%(sum(map(len,conversations.values()))))
-                    pickle.dump(self.conversations, f)
+                    pickle.dump(conversations, f)
                     f.close()
             except IOError as ioe:
                 sys.stderr.write("IOError: History was not stored.\n")
