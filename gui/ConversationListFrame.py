@@ -59,7 +59,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
         if jid not in self.conversations:
             self.ConversationListBox.Append(self.phonebook.jid_to_name(jid),jid)
         
-    def append(self, message, show=True, save=True):
+    def append(self, message, show=True, save=True, new=True):
         # find jid
         jid = message.getFrom()
         if jid is None:
@@ -80,20 +80,20 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             
         # show/create ConversationFrame
         if show:
-            self.conversationFrame(jid, message)
+            self.conversationFrame(jid, message, new)
     
-    def conversationFrame(self, jid, message = None):
+    def conversationFrame(self, jid, message = None, new = False):
         if jid in self.conversationFrames: # frame exists
             cf = self.conversationFrames[jid] # get frame reference
             if message:
-                cf.append(message) # append message
+                cf.append(message, new) # append message
             cf.Raise() # bring to front
         else: # frame does not exist
             # create frame
             cf = ConversationFrame(self, self.client, jid, self.phonebook.jid_to_name(jid))
             self.conversationFrames[jid] = cf # save frame reference
-            for message in self.conversations[jid]: # append all messages
-                cf.append(message)
+            for idx, message in enumerate(self.conversations[jid]): # append all messages
+                cf.append(message, new and idx == len(self.conversations[jid])-1) # mark only last message as new
             cf.Show() # show frame
     
     def onConversationFrameDestroy(self, cf):
@@ -170,7 +170,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                 elif isinstance(data, list):
                     sys.stderr.write("Data is seems to be old list format. Converting...\n")
                     for message in sorted(data, key=lambda m:m.getTimestamp()):
-                        self.append(message,False,False)
+                        self.append(message,False,False,False)
                     self.saveMessages()
                 else:
                     sys.stderr.write("Data is neither dict nor list.\n")

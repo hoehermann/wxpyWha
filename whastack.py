@@ -9,14 +9,19 @@ Uses WhaLayer to build the Yowsup stack.
 This is based on code from the yowsup echo example, the yowsup cli and pywhatsapp.
 """
 
+import sys
+
 # from echo stack
 from yowsup.stacks import YowStackBuilder
 from yowsup.layers.auth import AuthError
 from yowsup.layers.network import YowNetworkLayer
 
 # from cli stack
-from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
-import sys
+try:
+    from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST #tgalal
+except ImportError as ie:
+    sys.stderr.write("WARNING: PROP_IDENTITY_AUTOTRUST could not be imported from yowsup.layers.axolotl.props. Using hardcoded value instead.\n")
+    PROP_IDENTITY_AUTOTRUST = "org.openwhatsapp.yowsup.prop.axolotl.INDENTITY_AUTOTRUST" #as done by jlguardi
 
 # from cli layer
 from yowsup.layers import YowLayerEvent
@@ -37,7 +42,7 @@ class WhaClient(object):
             .push(WhaLayer)\
             .build()
         self.stack.setCredentials(credentials)
-        self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
+        self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True) #not in jlguardi
         
     def setYowsupEventHandler(self, handler):
         interface = self.stack.getLayerInterface(WhaLayer)
@@ -62,6 +67,7 @@ class WhaClient(object):
         except: # catch *all* exceptions
             sys.stderr.write("Unhandled exception.\n")
             traceback.print_exc()
+        sys.stderr.write("Yowsup WhaClient thread ended.\nYOU ARE NOW DISCONNECTED. Restart to reconnect.\n") # TODO: regard state in the GUI
 
 if __name__ == "__main__":
     client = WhaClient(("login","base64passwd"))

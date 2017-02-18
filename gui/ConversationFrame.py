@@ -9,6 +9,9 @@ import _generated
 import wx
 import datetime
 
+import tempfile # temporary filenames for downloaded media files
+from urllib2 import HTTPError # for handling errors while downloading media files
+
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
@@ -66,7 +69,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
             # all other keystrokes
             event.Skip() # event is forwarded to next control
         
-    def append(self, message):
+    def append(self, message, new):
         """Adds a message to this conversation history."""
         jid = message.getFrom()
         if jid is None:
@@ -96,9 +99,31 @@ class ConversationFrame ( _generated.ConversationFrame ):
         t = message.getType()
         if t == "text":
             line = message.getBody()
+        elif t == "media":
+            mt = message.getMediaType()
+            if new:
+                if mt in ["image", "audio", "video", "document"]:
+                    extension = "unknown"
+                    try:
+                        extension = message.getExtension()
+                    except Exception as e:
+                        if "Unsupported/unrecognized mimetype" in str(e):
+                            extension = ".%s"%(message.getMimeType().split("/")[-1])
+                        else:
+                            raise
+                    filename = "%s/%s%s"%(tempfile.gettempdir(),message.getId(),extension)
+                    try:
+                        f = open(filename, 'wb')
+                        f.write(message.getMediaContent())
+                        line = "File of media type %s with %s bytes size was downloaded from %s and decrypted to local file %s."%(message.getMediaType(),str(message.getMediaSize()),message.getMediaUrl(),filename)
+                    except HTTPError as httpe:
+                        line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                else:
+                    line = "Message is of unhandled media type %s."%(mt)
+            else:
+                line = "Message of type %s was handled in the past."%(t)
         else:
             line = "Message is of unhandled type %s."%(t)
-            # NOTE: for t == "media", message.url is available, but content is encrypted. as of 2016-07-12, yowsup cannot decrypt
             
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
         self.ConversationTextControl.AppendText(
@@ -150,4 +175,5 @@ class ConversationFrame ( _generated.ConversationFrame ):
     def onMessageAcknowledged(self):
         """Handler for server-side acknowledgements."""
         self.StatusBar.SetStatusText("Message received by server.")
+        # TODO: ignore repeated "partitipant received message" acknowledgements in group chats
         self.MessageTextControl.Clear()

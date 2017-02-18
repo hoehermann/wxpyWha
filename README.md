@@ -13,6 +13,7 @@ It looks like this:
  *  Answering a conversation with a text message.
  *  Initiating a conversasation with a known contact.
  *  Supports unicode emojis and other characters.
+ *  Receive audio or image media messages from single person conversations.
 
 ## Manual
 
