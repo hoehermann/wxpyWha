@@ -70,7 +70,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
             event.Skip() # event is forwarded to next control
         
     def append(self, message, new):
-        """Adds a message to this conversation history."""
+        """Adds a message to this conversation history display."""
         jid = message.getFrom()
         if jid is None:
             # outgoing message
@@ -100,26 +100,31 @@ class ConversationFrame ( _generated.ConversationFrame ):
         if t == "text":
             line = message.getBody()
         elif t == "media":
+            # TODO: split this into shorter methods. maybe move into main application logic.
             mt = message.getMediaType()
             if new:
-                if mt in ["image", "audio", "video", "document"]:
-                    extension = "unknown"
-                    try:
-                        extension = message.getExtension()
-                    except Exception as e:
-                        if "Unsupported/unrecognized mimetype" in str(e):
-                            extension = ".%s"%(message.getMimeType().split("/")[-1])
-                        else:
-                            raise
-                    filename = "%s/%s%s"%(tempfile.gettempdir(),message.getId(),extension)
-                    try:
-                        f = open(filename, 'wb')
-                        f.write(message.getMediaContent())
-                        line = "File of media type %s with %s bytes size was downloaded from %s and decrypted to local file %s."%(message.getMediaType(),str(message.getMediaSize()),message.getMediaUrl(),filename)
-                    except HTTPError as httpe:
-                        line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                if hasattr(message, 'getMediaContent') and callable(getattr(message, 'getMediaContent')):
+                    if mt in ["image", "audio", "video", "document"]:
+                        extension = "unknown"
+                        try:
+                            pass
+                            extension = message.getExtension()
+                        except Exception as e:
+                            if "Unsupported/unrecognized mimetype" in str(e):
+                                extension = ".%s"%(message.getMimeType().split("/")[-1])
+                            else:
+                                raise
+                        filename = "%s/%s%s"%(tempfile.gettempdir(),message.getId(),extension)
+                        try:
+                            f = open(filename, 'wb')
+                            f.write(message.getMediaContent())
+                            line = "File of media type %s with %s bytes size was downloaded from %s and decrypted to local file %s."%(message.getMediaType(),str(message.getMediaSize()),message.getMediaUrl(),filename)
+                        except HTTPError as httpe:
+                            line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                    else:
+                        line = "Message is of unhandled media type %s."%(mt)
                 else:
-                    line = "Message is of unhandled media type %s."%(mt)
+                    line = "The currently loaded version of yowsup cannot decrypt media messages."
             else:
                 line = "Message of type %s was handled in the past."%(t)
         else:
@@ -131,7 +136,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
                 formattedDate, 
                 sender_name, 
                 line.encode("utf-8") 
-                # I have no idea why this encode("utf-8") is needed for a message containing 😊, but messages containing 😀😉🐘💨☠ work fine without
+                # I have no idea why this encode("utf-8") is needed for a message containing 😊. Messages containing 😀😉🐘💨☠ work fine without
                 # TODO: Research how python unicode handling interacts with wxPython unicode handling
             )
         )
@@ -149,7 +154,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
             outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
             sent = self.client.sendMessage(outgoingMessage)
             # TODO: find out if pushing into the layer needs a deep copy
-            # TODO: find out why sent is always None
+            # TODO: find out why the returncode stored in "sent" is always "None"
             self.MessageTextControl.SetEditable(False)
             self.SendButton.Enable(False)
         else:
