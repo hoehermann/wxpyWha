@@ -8,6 +8,7 @@ Application logic for the ConversationFrame.
 import _generated
 import wx
 import datetime
+import traceback
 
 import tempfile # temporary filenames for downloaded media files
 from urllib2 import HTTPError # for handling errors while downloading media files
@@ -131,13 +132,20 @@ class ConversationFrame ( _generated.ConversationFrame ):
             line = "Message is of unhandled type %s."%(t)
             
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
+        try:
+            line = line.encode("utf-8")
+            # I have no idea why this encode("utf-8") is needed for a message containing 😊. Messages containing 😀😉🐘💨☠ work fine without
+            # using encode("utf-8") breaks receiving an ü -.-
+            # TODO: Research how python unicode handling interacts with wxPython unicode handling
+        except UnicodeDecodeError as ude:
+            line += " (UnicodeDecodeError occurred while preparing message for display)"
+            traceback.print_exc()
+            
         self.ConversationTextControl.AppendText(
             "(%s) %s: %s\n"%(
                 formattedDate, 
                 sender_name, 
-                line.encode("utf-8") 
-                # I have no idea why this encode("utf-8") is needed for a message containing 😊. Messages containing 😀😉🐘💨☠ work fine without
-                # TODO: Research how python unicode handling interacts with wxPython unicode handling
+                line
             )
         )
     
