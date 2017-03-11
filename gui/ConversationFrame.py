@@ -127,7 +127,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
                 else:
                     line = "The currently loaded version of yowsup cannot decrypt media messages."
             else:
-                line = "Message of type %s was handled in the past."%(t)
+                line = "Message of type %s was received in the past."%(t)
         else:
             line = "Message is of unhandled type %s."%(t)
             
@@ -138,8 +138,9 @@ class ConversationFrame ( _generated.ConversationFrame ):
             # using encode("utf-8") breaks receiving an ü -.-
             # TODO: Research how python unicode handling interacts with wxPython unicode handling
         except UnicodeDecodeError as ude:
-            line += " (UnicodeDecodeError occurred while preparing message for display)"
-            traceback.print_exc()
+            #line += " (UnicodeDecodeError occurred while preparing message for display)"
+            #traceback.print_exc()
+            print("UnicodeDecodeError occurred while preparing message for display. Continuing with original data.")
             
         self.ConversationTextControl.AppendText(
             "(%s) %s: %s\n"%(
@@ -158,13 +159,26 @@ class ConversationFrame ( _generated.ConversationFrame ):
         """Sends a message via the WhaLayer."""
         content = self.MessageTextControl.GetValue()
         if content:
-            self.StatusBar.SetStatusText("Sending message...")
-            outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-            sent = self.client.sendMessage(outgoingMessage)
-            # TODO: find out if pushing into the layer needs a deep copy
-            # TODO: find out why the returncode stored in "sent" is always "None"
-            self.MessageTextControl.SetEditable(False)
-            self.SendButton.Enable(False)
+            try:
+                self.StatusBar.SetStatusText("Sending message...")
+                try:
+                    outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8"), to = self.jid)
+                    sent = self.client.sendMessage(outgoingMessage)
+                except ValueError as ve:
+                    print("ValueError occurred while sending message. Retrying with original data...")
+                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
+                    sent = self.client.sendMessage(outgoingMessage)
+                except UnicodeEncodeError as uee:
+                    print("UnicodeEncodeError occurred while sending message. Retrying with original data...")
+                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
+                    sent = self.client.sendMessage(outgoingMessage)
+                # TODO: find out if pushing into the layer needs a deep copy
+                # TODO: find out why the returncode stored in "sent" is always "None"
+                self.MessageTextControl.SetEditable(False)
+                self.SendButton.Enable(False)
+            except:
+                self.StatusBar.SetStatusText("An error occurred.")
+                raise
         else:
             self.StatusBar.SetStatusText("Empty message was ignored.")
 
