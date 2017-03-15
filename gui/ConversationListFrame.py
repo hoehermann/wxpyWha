@@ -83,6 +83,7 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
             self.conversationFrame(jid, message, new)
     
     def conversationFrame(self, jid, message = None, new = False):
+        # Setting new to default True will always re-process last media-message
         if jid in self.conversationFrames: # frame exists
             cf = self.conversationFrames[jid] # get frame reference
             if message:
