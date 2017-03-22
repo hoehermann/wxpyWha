@@ -5,7 +5,7 @@
 Application logic for the ConversationListFrame.
 """
 
-import _generated
+import gui_generated
 import wx
 import pickle
 import sys
@@ -35,9 +35,9 @@ class YowsupEventHandler():
         evt = DataEvent(DataEventType, -1, data)
         wx.PostEvent(self.gui, evt)
 
-class ConversationListFrame ( _generated.ConversationListFrame ):
+class ConversationListFrame ( gui_generated.ConversationListFrame ):
     def __init__(self, parent, client, login, phonebook):
-        _generated.ConversationListFrame.__init__(self, parent)
+        gui_generated.ConversationListFrame.__init__(self, parent)
         self.Bind(DATA_EVENT, self.onYowsupEvent)
         
         self.client = client
@@ -133,9 +133,9 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
     def onMessageAcknowledged(self, evt):
         _, entity = evt.data
         if (entity.getClass() == "message"):
-            jid = entity._from
+            jid = entity._from # TODO: do not access "private" attribute
             if jid in self.conversationFrames:
-                self.conversationFrames[jid].onMessageAcknowledged()
+                self.conversationFrames[jid].onMessageAcknowledged(entity)
             
     def saveMessages(self):
         if DEBUG_SKIP_WRITE_HISTORY:

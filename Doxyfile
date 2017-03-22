@@ -1,0 +1,13 @@
+# Doxyfile 1.8.11
+
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = "wxpyWha"
+OUTPUT_DIRECTORY       = doc
+OUTPUT_LANGUAGE        = English
+EXTRACT_STATIC         = YES
+INPUT                  = ./ ./gui/
+FILE_PATTERNS          = *.py *.dox
+RECURSIVE              = NO
+GENERATE_LATEX         = NO
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg

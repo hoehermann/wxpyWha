@@ -5,7 +5,7 @@
 Application logic for the ConversationFrame.
 """
 
-import _generated
+import gui_generated
 import wx
 import datetime
 import traceback
@@ -32,7 +32,7 @@ CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
 """If true, hitting the escape key closes the conversation frame."""
 CONFIG_ESCAPE_CLOSES = True
 
-class ConversationFrame ( _generated.ConversationFrame ):
+class ConversationFrame ( gui_generated.ConversationFrame ):
     """
     This is the ConversationFrame. 
     
@@ -45,9 +45,10 @@ class ConversationFrame ( _generated.ConversationFrame ):
         :param client: Reference to the WhaLayer doing the actual work (for sending messages)
         :param jid: The ID of this conversation (the other party or group chat).
         """
-        _generated.ConversationFrame.__init__(self, parent)
+        gui_generated.ConversationFrame.__init__(self, parent)
         self.client = client
         self.jid = jid
+        self.ackIDs = {}
         self.SetTitle(title)
         self.SetIcon(self.GetParent().GetIcon())
         self.MessageTextControl.SetFocus()
@@ -199,8 +200,13 @@ class ConversationFrame ( _generated.ConversationFrame ):
         self.MessageTextControl.SetEditable(True)
         self.SendButton.Enable(True)
         
-    def onMessageAcknowledged(self):
+    def onMessageAcknowledged(self, entity):
         """Handler for server-side acknowledgements."""
-        self.StatusBar.SetStatusText("Message received by server.")
-        # TODO: ignore repeated "partitipant received message" acknowledgements in group chats
-        self.MessageTextControl.Clear()
+        eid = entity.getId()
+        if (eid not in self.ackIDs):
+            self.StatusBar.SetStatusText("Message received by server.")
+            self.MessageTextControl.Clear()
+            self.ackIDs[eid] = 1
+        else:
+            self.ackIDs[eid] += 1
+            self.StatusBar.SetStatusText("Message received %d times."%(self.ackIDs[eid]))
