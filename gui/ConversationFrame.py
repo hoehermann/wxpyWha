@@ -5,13 +5,13 @@
 Application logic for the ConversationFrame.
 """
 
-import _generated
+import gui._generated # TODO: name this properly (mind inheritance and super calls)
 import wx
 import datetime
 import traceback
 
 import tempfile # temporary filenames for downloaded media files
-from urllib2 import HTTPError # for handling errors while downloading media files
+#from urllib2 import HTTPError # for handling errors while downloading media files
 
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
@@ -32,7 +32,7 @@ CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
 """If true, hitting the escape key closes the conversation frame."""
 CONFIG_ESCAPE_CLOSES = True
 
-class ConversationFrame ( _generated.ConversationFrame ):
+class ConversationFrame ( gui._generated.ConversationFrame ):
     """
     This is the ConversationFrame. 
     
@@ -45,7 +45,7 @@ class ConversationFrame ( _generated.ConversationFrame ):
         :param client: Reference to the WhaLayer doing the actual work (for sending messages)
         :param jid: The ID of this conversation (the other party or group chat).
         """
-        _generated.ConversationFrame.__init__(self, parent)
+        gui._generated.ConversationFrame.__init__(self, parent)
         self.client = client
         self.jid = jid
         self.SetTitle(title)
@@ -120,8 +120,11 @@ class ConversationFrame ( _generated.ConversationFrame ):
                             f = open(filename, 'wb')
                             f.write(message.getMediaContent())
                             line = "File of media type %s with %s bytes size was downloaded from %s and decrypted to local file %s."%(message.getMediaType(),str(message.getMediaSize()),message.getMediaUrl(),filename)
-                        except HTTPError as httpe:
-                            line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                        #except HTTPError as httpe:
+                        #    line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                        except:
+                            # TODO: reintroduce error-handling
+                            raise
                     else:
                         line = "Message is of unhandled media type %s."%(mt)
                 else:
@@ -132,16 +135,6 @@ class ConversationFrame ( _generated.ConversationFrame ):
             line = "Message is of unhandled type %s."%(t)
             
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
-        try:
-            line = line.encode("utf-8")
-            # I have no idea why this encode("utf-8") is needed for a message containing 😊. Messages containing 😀😉🐘💨☠ work fine without
-            # using encode("utf-8") breaks receiving an ü -.-
-            # TODO: Research how python unicode handling interacts with wxPython unicode handling
-        except UnicodeDecodeError as ude:
-            #line += " (UnicodeDecodeError occurred while preparing message for display)"
-            #traceback.print_exc()
-            print("UnicodeDecodeError occurred while preparing message for display. Continuing with original data.")
-            
         self.ConversationTextControl.AppendText(
             "(%s) %s: %s\n"%(
                 formattedDate, 
@@ -161,17 +154,8 @@ class ConversationFrame ( _generated.ConversationFrame ):
         if content:
             try:
                 self.StatusBar.SetStatusText("Sending message...")
-                try:
-                    outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8"), to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
-                except ValueError as ve:
-                    print("ValueError occurred while sending message. Retrying with original data...")
-                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
-                except UnicodeEncodeError as uee:
-                    print("UnicodeEncodeError occurred while sending message. Retrying with original data...")
-                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
+                outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
+                sent = self.client.sendMessage(outgoingMessage)
                 # TODO: find out if pushing into the layer needs a deep copy
                 # TODO: find out why the returncode stored in "sent" is always "None"
                 self.MessageTextControl.SetEditable(False)

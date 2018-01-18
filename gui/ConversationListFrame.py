@@ -5,11 +5,11 @@
 Application logic for the ConversationListFrame.
 """
 
-import _generated
+import gui._generated # TODO: name this properly (mind inheritance and super calls)
 import wx
 import pickle
 import sys
-from ConversationFrame import ConversationFrame
+from gui.ConversationFrame import ConversationFrame
 from yowsup.layers.protocol_messages.protocolentities import MessageProtocolEntity
 
 """If true, message entities are not saved"""
@@ -35,9 +35,9 @@ class YowsupEventHandler():
         evt = DataEvent(DataEventType, -1, data)
         wx.PostEvent(self.gui, evt)
 
-class ConversationListFrame ( _generated.ConversationListFrame ):
+class ConversationListFrame ( gui._generated.ConversationListFrame ):
     def __init__(self, parent, client, login, phonebook):
-        _generated.ConversationListFrame.__init__(self, parent)
+        gui._generated.ConversationListFrame.__init__(self, parent)
         self.Bind(DATA_EVENT, self.onYowsupEvent)
         
         self.client = client
@@ -145,8 +145,8 @@ class ConversationListFrame ( _generated.ConversationListFrame ):
                 with open(self.entitiesfilename, 'wb') as f:
                     conversations = self.conversations
                     # do not save locally generated debug content
-                    conversations = {k: v for k, v in conversations.iteritems() if k not in ["DEBUG@s.whatsapp.net"]}
-                    #conversations = {k: v for k, v in conversations.iteritems() if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
+                    conversations = {k: v for k, v in conversations.items() if k not in ["DEBUG@s.whatsapp.net"]}
+                    #conversations = {k: v for k, v in conversations.iter() if wx.MessageDialog(self, m.getBody(),"Keep Message?", wx.YES|wx.NO|wx.ICON_QUESTION).ShowModal() == wx.ID_YES}
                     sys.stderr.write("Writing %d messages...\n"%(sum(map(len,conversations.values()))))
                     pickle.dump(conversations, f)
                     f.close()

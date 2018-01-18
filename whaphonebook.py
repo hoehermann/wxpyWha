@@ -36,7 +36,7 @@ class Phonebook():
         this.filename = csv_file_name
         this.entries = {}
         try:
-            with open(csv_file_name, 'rb') as csvfile:
+            with open(csv_file_name, 'r', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile, delimiter='\t')
                 for row in reader:
                     this.entries[row[0]] = row[1]
