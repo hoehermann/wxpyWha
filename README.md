@@ -13,7 +13,8 @@ It looks like this:
  *  Answering a conversation with a text message.
  *  Initiating a conversasation with a known contact.
  *  Supports unicode emojis and other characters.
- *  Receive audio or image media messages from single person conversations.
+ *  Receive audio or image media messages from single person conversations  
+    (depends on underlying yowsup library version capabilities).
 
 ## Manual
 
@@ -34,7 +35,7 @@ To initiate a conversation, follow these steps:
 
 Depends on [yowsup](https://github.com/AragurDEV/yowsup) and [wxPython](https://github.com/wxWidgets/Phoenix).
 
- *  Geared towards AragurDEV's fork of yowsup2. Tested against commit 9d267f9.
+ *  Geared towards AragurDEV's fork of yowsup. Tested against commit 9d267f9.
  *  Depends on wxPython 4.0 (Phoenix). Tested against version 4.0.0b2 .  
 
 See the respective project websites for more detailed installation instructions.
