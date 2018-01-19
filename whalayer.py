@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """@package docstring
@@ -97,5 +96,4 @@ class WhaLayer(YowInterfaceLayer):
             # would be the correct way to send a message
             if self.interface.enventHandler:
                 self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,True))
-            
 

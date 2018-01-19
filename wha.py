@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """@package docstring
@@ -55,4 +55,4 @@ if __name__ == "__main__":
     
     frame.Show()
     app.MainLoop()
-    
+
