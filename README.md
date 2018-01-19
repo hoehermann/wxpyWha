@@ -2,7 +2,7 @@
 
 Crude wxPython GUI around the yowsup Whatsapp client library.
 
-For Python 2.7. Tested on Linux only.
+For Python 3.5. Tested on Linux only.
 
 It looks like this:
 ![Screenshot](/screenshot.png?raw=true "Screenshot")
@@ -13,7 +13,8 @@ It looks like this:
  *  Answering a conversation with a text message.
  *  Initiating a conversasation with a known contact.
  *  Supports unicode emojis and other characters.
- *  Receive audio or image media messages from single person conversations.
+ *  Receive audio or image media messages from single person conversations  
+    (depends on underlying yowsup library version capabilities).
 
 ## Manual
 
@@ -32,10 +33,10 @@ To initiate a conversation, follow these steps:
 
 ## Dependencies
 
-Depends on [yowsup](https://github.com/tgalal/yowsup) and [wxPython](https://www.wxpython.org).
+Depends on [yowsup](https://github.com/AragurDEV/yowsup) and [wxPython](https://github.com/wxWidgets/Phoenix).
 
- *  yowsup can usually be installed with `pip install yowsup2` (Linux and Windows). Building yowsup's implementation of Curve25519 currently fails on Windows due to a [bug](https://github.com/tgalal/python-axolotl-curve25519/issues/5).
- *  wxPython can be installed via package manager (Linux distributions) or downloaded from their website (Windows).
+ *  Geared towards AragurDEV's fork of yowsup. Tested against commit 9d267f9.
+ *  Depends on wxPython 4.0 (Phoenix). Tested against version 4.0.0b2 .  
 
 See the respective project websites for more detailed installation instructions.
 

@@ -58,7 +58,7 @@ class WhaClient(object):
         try:
             self.stack.loop()
         except AuthError as e:
-            sys.stderr.write("Authentication Error: %s\n"%e.message)
+            sys.stderr.write("Authentication Error\n")
         except KeyboardInterrupt:
             # This is only relevant if this is the main module
             # TODO: disconnect cleanly

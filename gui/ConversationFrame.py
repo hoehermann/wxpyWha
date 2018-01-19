@@ -5,13 +5,13 @@
 Application logic for the ConversationFrame.
 """
 
-import gui_generated
+import gui._generated # TODO: name this properly (mind inheritance and super calls)
 import wx
 import datetime
 import traceback
 
 import tempfile # temporary filenames for downloaded media files
-from urllib2 import HTTPError # for handling errors while downloading media files
+#from urllib2 import HTTPError # for handling errors while downloading media files
 
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
@@ -32,7 +32,7 @@ CONGFIG_OWN_NAME = "SELF" # formerly SELF@s.whatsapp.net
 """If true, hitting the escape key closes the conversation frame."""
 CONFIG_ESCAPE_CLOSES = True
 
-class ConversationFrame ( gui_generated.ConversationFrame ):
+class ConversationFrame ( gui._generated.ConversationFrame ):
     """
     This is the ConversationFrame. 
     
@@ -45,7 +45,7 @@ class ConversationFrame ( gui_generated.ConversationFrame ):
         :param client: Reference to the WhaLayer doing the actual work (for sending messages)
         :param jid: The ID of this conversation (the other party or group chat).
         """
-        gui_generated.ConversationFrame.__init__(self, parent)
+        gui._generated.ConversationFrame.__init__(self, parent)
         self.client = client
         self.jid = jid
         self.ackIDs = {}
@@ -121,8 +121,11 @@ class ConversationFrame ( gui_generated.ConversationFrame ):
                             f = open(filename, 'wb')
                             f.write(message.getMediaContent())
                             line = "File of media type %s with %s bytes size was downloaded from %s and decrypted to local file %s."%(message.getMediaType(),str(message.getMediaSize()),message.getMediaUrl(),filename)
-                        except HTTPError as httpe:
-                            line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                        #except HTTPError as httpe:
+                        #    line = "File of media type %s could not be downloaded. Reason: %s"%(message.getMediaType(),httpe.reason)
+                        except:
+                            # TODO: reintroduce error-handling
+                            raise
                     else:
                         line = "Message is of unhandled media type %s."%(mt)
                 else:
@@ -201,7 +204,8 @@ class ConversationFrame ( gui_generated.ConversationFrame ):
         self.SendButton.Enable(True)
         
     def onMessageAcknowledged(self, entity):
-        """Handler for server-side acknowledgements."""
+        """Handler for acknowledgements."""
+        # TODO: distinguish between acknowledgements from server vs. other participants
         eid = entity.getId()
         if (eid not in self.ackIDs):
             self.StatusBar.SetStatusText("Message received by server.")
