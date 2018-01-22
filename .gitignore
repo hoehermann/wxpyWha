@@ -1,6 +1,7 @@
 *.pkl
 *.pyc
 yowsup*
+Doxyfile
 doc/
 icon/
 phonebook.csv

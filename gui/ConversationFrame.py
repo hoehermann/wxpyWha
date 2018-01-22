@@ -135,16 +135,6 @@ class ConversationFrame ( gui._generated.ConversationFrame ):
             line = "Message is of unhandled type %s."%(t)
             
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%Y-%m-%d %H:%M:%S')
-        try:
-            line = line.encode("utf-8")
-            # I have no idea why this encode("utf-8") is needed for a message containing 😊. Messages containing 😀😉🐘💨☠ work fine without
-            # using encode("utf-8") breaks receiving an ü -.-
-            # TODO: Research how python unicode handling interacts with wxPython unicode handling
-        except UnicodeDecodeError as ude:
-            #line += " (UnicodeDecodeError occurred while preparing message for display)"
-            #traceback.print_exc()
-            print("UnicodeDecodeError occurred while preparing message for display. Continuing with original data.")
-            
         self.ConversationTextControl.AppendText(
             "(%s) %s: %s\n"%(
                 formattedDate, 
@@ -164,17 +154,8 @@ class ConversationFrame ( gui._generated.ConversationFrame ):
         if content:
             try:
                 self.StatusBar.SetStatusText("Sending message...")
-                try:
-                    outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8"), to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
-                except ValueError as ve:
-                    print("ValueError occurred while sending message. Retrying with original data...")
-                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
-                except UnicodeEncodeError as uee:
-                    print("UnicodeEncodeError occurred while sending message. Retrying with original data...")
-                    outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
-                    sent = self.client.sendMessage(outgoingMessage)
+                outgoingMessage = TextMessageProtocolEntity(content, to = self.jid)
+                sent = self.client.sendMessage(outgoingMessage)
                 # TODO: find out if pushing into the layer needs a deep copy
                 # TODO: find out why the returncode stored in "sent" is always "None"
                 self.MessageTextControl.SetEditable(False)
