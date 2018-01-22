@@ -1,6 +1,6 @@
 *.pkl
 *.pyc
-yowsup
+yowsup*
 doc/
 icon/
 phonebook.csv
