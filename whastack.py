@@ -34,7 +34,10 @@ import traceback
 # from https://github.com/tgalal/yowsup/issues/1069
 import logging 
 
-import queue
+try:
+    import queue
+except ImportError: # python2 compatibility
+    import Queue as queue
 
 from whalayer import WhaLayer
 

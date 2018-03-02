@@ -13,6 +13,10 @@ import os
 import sys
 import traceback
 
+if (sys.version_info < (3,)):
+    # support for encoding in phyton 2.7
+    from io import open
+
 # This suppresses an XPath related FutureWarning.
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)

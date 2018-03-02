@@ -12,6 +12,13 @@ from gui.ConversationListFrame import ConversationListFrame, YowsupEventHandler
 from whaphonebook import Phonebook
 import sys
 
+if (sys.version_info < (3,)):
+    # really ugly hack for maintaining compatibility with python 2 without explicit de- and encoding steps
+    # discouraged as described in https://stackoverflow.com/questions/3828723/
+    # included nevertheless to make @Jeronimo17 happy
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+
 # from pywhatsapp
 from yowsup.layers.protocol_messages.protocolentities import TextMessageProtocolEntity
 
