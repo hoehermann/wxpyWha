@@ -15,7 +15,7 @@ from yowsup.layers.network import YowNetworkLayer
 from yowsup.layers.interface import YowInterfaceLayer, ProtocolEntityCallback
 
 # from cli layer
-from yowsup.layers import EventCallback
+from yowsup.layers import EventCallback, YowLayerEvent
 
 import sys
 
@@ -24,6 +24,7 @@ class WhaLayerInterface():
     def __init__(self):
         self.enventHandler = None
         self.sendMessage = None
+        self.disconnect = None
 
 class WhaLayer(YowInterfaceLayer):
     """Custom YowInterfaceLayer class for wxpyWha."""
@@ -32,6 +33,7 @@ class WhaLayer(YowInterfaceLayer):
         YowInterfaceLayer.__init__(self)
         self.interface = WhaLayerInterface() # TODO: I have no idea if this is the correct way of using the interface attribute
         self.interface.sendMessage = self.sendMessage # TODO: I have no idea if this can be called in out-of-thread context
+        self.interface.disconnect = self.disconnect # TODO: see above
         self.connected = False
     
     @ProtocolEntityCallback("message")
@@ -73,6 +75,8 @@ class WhaLayer(YowInterfaceLayer):
     def onStateDisconnected(self,layerEvent):
         self.connected = False
         sys.stderr.write("Disconnected. Reason: %s\n" % layerEvent.getArg("reason"))
+        if self.interface.enventHandler:
+            self.interface.enventHandler.handleEvent(("disconnected",entity))
         
     @ProtocolEntityCallback("success")
     def onSuccess(self, entity):
@@ -97,3 +101,6 @@ class WhaLayer(YowInterfaceLayer):
             if self.interface.enventHandler:
                 self.interface.enventHandler.handleEvent(("sendMessage",outgoingMessage,True))
 
+    def disconnect(self):
+        # from cli demo
+        self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))

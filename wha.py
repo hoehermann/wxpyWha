@@ -40,9 +40,9 @@ if __name__ == "__main__":
     frame = ConversationListFrame(None, client, login, phonebook)
     handler = YowsupEventHandler(frame)
     client.setYowsupEventHandler(handler)
+    backgroundClient = None
     if not DEBUG_PASSIVE:
         backgroundClient = threading.Thread(target=client.start)
-        backgroundClient.daemon = True
         backgroundClient.start()
     if DEBUG_GENERATE_MESSAGE:
         tmpe = TextMessageProtocolEntity(
@@ -56,3 +56,8 @@ if __name__ == "__main__":
     frame.Show()
     app.MainLoop()
 
+    client.setEnableReconnect(False)
+    if (backgroundClient):
+        client.disconnect()
+        sys.stderr.write("Disconnect issued, waiting for background client to terminate...\n")
+        backgroundClient.join()

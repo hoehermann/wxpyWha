@@ -9,6 +9,8 @@ Uses WhaLayer to build the Yowsup stack.
 This is based on code from the yowsup echo example, the yowsup cli and pywhatsapp.
 """
 
+SECONDS_RECONNECT_DELAY = 10
+
 import sys
 
 # from echo stack
@@ -32,6 +34,8 @@ import traceback
 # from https://github.com/tgalal/yowsup/issues/1069
 import logging 
 
+import queue
+
 from whalayer import WhaLayer
 
 class WhaClient(object):
@@ -43,6 +47,8 @@ class WhaClient(object):
             .build()
         self.stack.setCredentials(credentials)
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True) #not in jlguardi
+        self.wantReconnect = True
+        self.abortReconnectWait = queue.Queue()
         
     def setYowsupEventHandler(self, handler):
         interface = self.stack.getLayerInterface(WhaLayer)
@@ -52,22 +58,38 @@ class WhaClient(object):
         interface = self.stack.getLayerInterface(WhaLayer)
         interface.sendMessage(outgoingMessage)
         
+    def disconnect(self):
+        interface = self.stack.getLayerInterface(WhaLayer)
+        interface.disconnect()
+        
     def start(self):
         logging.basicConfig(level=logging.WARNING)
-        self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
-        try:
-            self.stack.loop()
-        except AuthError as e:
-            sys.stderr.write("Authentication Error\n")
-        except KeyboardInterrupt:
-            # This is only relevant if this is the main module
-            # TODO: disconnect cleanly
-            print("\nExit")
-            sys.exit(0)
-        except: # catch *all* exceptions
-            sys.stderr.write("Unhandled exception.\n")
-            traceback.print_exc()
-        sys.stderr.write("Yowsup WhaClient thread ended.\nYOU ARE NOW DISCONNECTED. Restart to reconnect.\n") # TODO: regard state in the GUI
+        while (self.wantReconnect):
+            self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+            try:
+                self.stack.loop()
+            except AuthError as e:
+                sys.stderr.write("Authentication Error\n")
+            except KeyboardInterrupt:
+                # This is only relevant if this is the main module
+                # TODO: disconnect cleanly
+                print("\nExit")
+                sys.exit(0)
+            except: # catch *all* exceptions
+                sys.stderr.write("Unhandled exception.\n")
+                traceback.print_exc()
+            # TODO: regard connection state in the GUI
+            sys.stderr.write("Yowsup WhaClient exited.\nYOU ARE NOW DISCONNECTED.\n") 
+            if (self.wantReconnect):
+                sys.stderr.write("Auto-reconnect enabled. Waiting up to %d seconds before reconnecting...\n"%(SECONDS_RECONNECT_DELAY))
+                try:
+                    self.abortReconnectWait.get(timeout=SECONDS_RECONNECT_DELAY)
+                except queue.Empty:
+                    pass
+
+    def setEnableReconnect(self, b = True):
+        self.wantReconnect = b
+        self.abortReconnectWait.put(b)
 
 if __name__ == "__main__":
     client = WhaClient(("login","base64passwd"))
