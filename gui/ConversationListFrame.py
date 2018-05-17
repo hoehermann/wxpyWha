@@ -87,8 +87,9 @@ class ConversationListFrame ( gui._generated.ConversationListFrame ):
             cf = self.conversationFrames[jid] # get frame reference
             if message:
                 cf.append(message, new) # append message
-            # cf.Raise() # bring to front
-            cf.RequestUserAttention() # flash window
+            if not self.IsActive():
+                # cf.Raise() # bring to front
+                cf.RequestUserAttention() # flash window
         else: # frame does not exist
             # create frame
             cf = ConversationFrame(self, self.client, jid, self.phonebook.jid_to_name(jid))
