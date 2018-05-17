@@ -87,7 +87,7 @@ class ConversationListFrame ( gui._generated.ConversationListFrame ):
             cf = self.conversationFrames[jid] # get frame reference
             if message:
                 cf.append(message, new) # append message
-            if not self.IsActive():
+            if not wx.App.Get().IsActive():
                 # cf.Raise() # bring to front
                 cf.RequestUserAttention() # flash window
         else: # frame does not exist

@@ -11,6 +11,7 @@ from whastack import WhaClient
 from gui.ConversationListFrame import ConversationListFrame, YowsupEventHandler
 from whaphonebook import Phonebook
 import sys
+import time
 
 if (sys.version_info < (3,)):
     # really ugly hack for maintaining compatibility with python 2 without explicit de- and encoding steps
@@ -52,10 +53,15 @@ if __name__ == "__main__":
         backgroundClient = threading.Thread(target=client.start)
         backgroundClient.start()
     if DEBUG_GENERATE_MESSAGE:
-        tmpe = TextMessageProtocolEntity(
-            "locally generated test message", 
-            _from="DEBUG@s.whatsapp.net")
-        imh.onIncomingMessage(tmpe)
+        def _debug_generate_message():
+            time.sleep(3)
+            tmpe = TextMessageProtocolEntity(
+                "locally generated test message", 
+                _from="DEBUG@s.whatsapp.net")
+            evt = type('MockEvent', (object,), { "data": tmpe })
+            frame.onIncomingMessage(evt)
+            print("debug message sent")
+        threading.Thread(target=_debug_generate_message).start()
     
     icon = wx.Icon("wxpyWha.ico", wx.BITMAP_TYPE_ICO)
     frame.SetIcon(icon)
