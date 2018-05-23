@@ -87,9 +87,6 @@ class ConversationListFrame ( gui._generated.ConversationListFrame ):
             cf = self.conversationFrames[jid] # get frame reference
             if message:
                 cf.append(message, new) # append message
-            if not wx.App.Get().IsActive():
-                # cf.Raise() # bring to front
-                cf.RequestUserAttention() # flash window
         else: # frame does not exist
             # create frame
             cf = ConversationFrame(self, self.client, jid, self.phonebook.jid_to_name(jid))
@@ -97,6 +94,9 @@ class ConversationListFrame ( gui._generated.ConversationListFrame ):
             for idx, message in enumerate(self.conversations[jid]): # append all messages
                 cf.append(message, new and idx == len(self.conversations[jid])-1) # mark only last message as new
             cf.Show() # show frame
+        if not cf.IsActive():
+            # cf.Raise() # bring to front
+            cf.RequestUserAttention() # flash window
     
     def onConversationFrameDestroy(self, cf):
         del self.conversationFrames[cf.jid] # remove reference

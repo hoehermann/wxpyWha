@@ -53,15 +53,16 @@ if __name__ == "__main__":
         backgroundClient = threading.Thread(target=client.start)
         backgroundClient.start()
     if DEBUG_GENERATE_MESSAGE:
-        def _debug_generate_message():
-            time.sleep(3)
-            tmpe = TextMessageProtocolEntity(
-                "locally generated test message", 
-                _from="DEBUG@s.whatsapp.net")
-            evt = type('MockEvent', (object,), { "data": tmpe })
-            frame.onIncomingMessage(evt)
-            print("debug message sent")
-        threading.Thread(target=_debug_generate_message).start()
+        tmpe = TextMessageProtocolEntity(
+            "locally generated test message", 
+            _from="DEBUG@s.whatsapp.net")
+        handler.handleEvent(tmpe)
+        def _debug_inject_messages():
+            while True:
+                time.sleep(3)
+                handler.handleEvent(tmpe)
+                print("debug message sent")
+        threading.Thread(target=_debug_inject_messages).start()
     
     icon = wx.Icon("wxpyWha.ico", wx.BITMAP_TYPE_ICO)
     frame.SetIcon(icon)
